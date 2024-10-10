@@ -1286,7 +1286,7 @@ RCT_EXPORT_METHOD(getRootTemplate: (RCTResponseSenderBlock)callback) {
 
     if ([json objectForKey:@"junctionImage"]) {
         UIImage *junctionImage = [RCTConvert UIImage:json[@"junctionImage"]];
-        [maneuver setJunctionImage:[self imageWithTint:junctionImage andTintColor:[UIColor whiteColor]]];
+        [maneuver setJunctionImage: junctionImage];
     }
 
     if ([json objectForKey:@"initialTravelEstimates"]) {
