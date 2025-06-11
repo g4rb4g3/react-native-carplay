@@ -61,12 +61,13 @@ class Parser(
       val source = ImageSource(context, map.getString("uri"))
       val imageRequest = ImageRequestBuilder.newBuilderWithSource(source.uri).build()
       val dataSource = Fresco.getImagePipeline().fetchDecodedImage(imageRequest, context)
-      return DataSources.waitForFinalResult((dataSource)).use {
-        val result = it as CloseableReference<CloseableBitmap>
-        val bitmap = result.get().underlyingBitmap
-        CloseableReference.closeSafely(result)
-        return@use bitmap
-      }
+      val result = DataSources.waitForFinalResult(dataSource) as CloseableReference<CloseableBitmap>
+      val bitmap = result.get().underlyingBitmap
+
+      CloseableReference.closeSafely(result)
+      dataSource.close()
+
+      return bitmap
     }
 
     fun parseCarIcon(map: ReadableMap, context: CarContext): CarIcon {
