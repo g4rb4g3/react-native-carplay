@@ -1,22 +1,21 @@
 package org.birkir.carplay.utils
 
-import android.util.Log
 import androidx.car.app.CarContext
 import androidx.car.app.navigation.NavigationManager
 import androidx.car.app.navigation.NavigationManagerCallback
-import androidx.car.app.navigation.model.TravelEstimate
 import androidx.car.app.navigation.model.Trip
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import com.facebook.react.bridge.ReadableMap
 import org.birkir.carplay.parser.Parser
 
 object CarNavigationManager {
-    private val TAG = "CarNavigationManager"
-
     private lateinit var navigationManager: NavigationManager
     private lateinit var eventEmitter: EventEmitter
     private lateinit var carContext: CarContext
 
-    private var isNavigating = false
+    private var isNavigating = MutableLiveData(false)
+    val isNavigatingLiveData: LiveData<Boolean> get() = isNavigating
 
     fun init(carContext: CarContext, eventEmitter: EventEmitter) {
         this.eventEmitter = eventEmitter
@@ -35,7 +34,7 @@ object CarNavigationManager {
 
             override fun onStopNavigation() {
                 eventEmitter.didCancelNavigation()
-                isNavigating = false
+                isNavigating.value = false
             }
         })
     }
@@ -45,16 +44,16 @@ object CarNavigationManager {
 
     fun navigationStarted() {
         navigationManager.navigationStarted()
-        isNavigating = true
+        isNavigating.value = true
     }
 
     fun navigationEnded() {
         navigationManager.navigationEnded()
-        isNavigating = false
+        isNavigating.value = false
     }
 
     fun updateTrip(tripConfig: ReadableMap) {
-        if (!isNavigating) {
+        if (isNavigating.value != true) {
             return
         }
 

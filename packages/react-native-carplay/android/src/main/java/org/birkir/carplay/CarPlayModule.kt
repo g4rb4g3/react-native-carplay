@@ -1,6 +1,7 @@
 package org.birkir.carplay
 
 import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -15,6 +16,8 @@ import androidx.car.app.model.Template
 import androidx.car.app.navigation.model.NavigationTemplate
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Callback
 import com.facebook.react.bridge.LifecycleEventListener
@@ -36,11 +39,11 @@ import org.birkir.carplay.utils.EventEmitter
 import java.lang.UnsupportedOperationException
 import java.util.WeakHashMap
 
+data class CarNotification (val title: String?, val text: String?, val largeIcon: Bitmap?)
 
 @ReactModule(name = CarPlayModule.NAME)
 class CarPlayModule internal constructor(private val reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext) {
-
   private lateinit var carContext: CarContext
   private var screenManager: ScreenManager? = null
   private val carScreens: WeakHashMap<String, CarScreen> = WeakHashMap()
@@ -385,6 +388,14 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
     CarPlayTelemetryObserver.stopTelemetryObserver()
   }
 
+  @ReactMethod
+  fun notify(title: String, text: String, largeIcon: ReadableMap?) {
+    val icon = largeIcon?.let {
+      Parser.parseBitmap(it, carContext)
+    }
+    notification.postValue(CarNotification(title, text, icon))
+  }
+
   private fun createCarScreenContext(screen: CarScreen, emitter: EventEmitter): CarScreenContext {
     val templateId = screen.marker!!
     return CarScreenContext(templateId, emitter, carScreens)
@@ -425,5 +436,8 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
     const val NAME = "RNCarPlay"
     const val TAG = "CarPlay"
     const val APP_RELOAD = "org.birkir.carplay.AppReload"
+
+    private val notification = MutableLiveData<CarNotification?>(null)
+    val notifier: LiveData<CarNotification?> get() = notification
   }
 }

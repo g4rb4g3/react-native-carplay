@@ -1,5 +1,6 @@
 package org.birkir.carplay.parser
 
+import android.graphics.Bitmap
 import android.text.Spannable
 import android.text.SpannableString
 import android.util.Log
@@ -56,16 +57,20 @@ class Parser(
       }.build()
     }
 
-    fun parseCarIcon(map: ReadableMap, context: CarContext): CarIcon {
+    fun parseBitmap(map: ReadableMap, context: CarContext): Bitmap {
       val source = ImageSource(context, map.getString("uri"))
       val imageRequest = ImageRequestBuilder.newBuilderWithSource(source.uri).build()
       val dataSource = Fresco.getImagePipeline().fetchDecodedImage(imageRequest, context)
-      val result = DataSources.waitForFinalResult(dataSource) as CloseableReference<CloseableBitmap>
-      val bitmap = result.get().underlyingBitmap
+      return DataSources.waitForFinalResult((dataSource)).use {
+        val result = it as CloseableReference<CloseableBitmap>
+        val bitmap = result.get().underlyingBitmap
+        CloseableReference.closeSafely(result)
+        return@use bitmap
+      }
+    }
 
-      CloseableReference.closeSafely(result)
-      dataSource.close()
-
+    fun parseCarIcon(map: ReadableMap, context: CarContext): CarIcon {
+      val bitmap = parseBitmap(map, context)
       return CarIcon.Builder(IconCompat.createWithBitmap(bitmap)).build()
     }
 

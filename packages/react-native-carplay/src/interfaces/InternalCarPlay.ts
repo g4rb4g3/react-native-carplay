@@ -101,4 +101,8 @@ export interface InternalCarPlay extends NativeModule {
    * @namespace Android
    */
   stopTelemetryObserver: () => void;
+  /**
+   * @namespace Android
+   */
+  notify: (title: string, text: string, largeIcon: unknown) => void;
 }

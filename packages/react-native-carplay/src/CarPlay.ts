@@ -1,4 +1,5 @@
 import {
+  Image,
   ImageSourcePropType,
   NativeEventEmitter,
   NativeModules,
@@ -425,6 +426,11 @@ export class CarPlayInterface {
   public dismissAlert(id: number) {
     this.alertCallbacks = {};
     CarPlay.bridge.dismissAlert(id);
+  }
+
+  public notify(title: string, text: string, largeIcon?: ImageSourcePropType) {
+    const icon = largeIcon == null ? null : Image.resolveAssetSource(largeIcon);
+    CarPlay.bridge.notify(title, text, icon);
   }
 }
 
