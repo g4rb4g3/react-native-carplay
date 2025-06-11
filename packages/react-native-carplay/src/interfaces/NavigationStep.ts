@@ -39,7 +39,7 @@ export type NavigationStep = {
         end: number;
       };
   lanesImage?: ImageSourcePropType;
-  maneuver?: Maneuver;
+  maneuver?: AndroidAutoManeuver;
   road?: string;
 };
 
@@ -78,7 +78,7 @@ type RoundaboutWithAngleManeuver = {
   image: ImageSourcePropType;
 };
 
-type Maneuver = BaseManeuver | RoundaboutManeuver | RoundaboutWithAngleManeuver;
+export type AndroidAutoManeuver = BaseManeuver | RoundaboutManeuver | RoundaboutWithAngleManeuver;
 
 export enum AndroidAutoManeuverType {
   TYPE_UNKNOWN = 0,
