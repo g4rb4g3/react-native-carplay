@@ -7,6 +7,7 @@ import android.content.IntentFilter
 import android.content.res.Configuration
 import android.os.Build
 import android.util.Log
+import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.Session
 import androidx.car.app.SessionInfo
@@ -55,7 +56,7 @@ class CarPlaySession(
     lifecycle.addObserver(this)
 
     screen = CarScreen(carContext, null, isCluster)
-    screen.marker = clusterTemplateId?: "root"
+    screen.marker = clusterTemplateId ?: "root"
 
     // Handle reload events
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -165,13 +166,23 @@ class CarPlaySession(
   }
 
   override fun onNewIntent(intent: Intent) {
-    // handle intents
-    Log.d(TAG, "CarPlaySession.onNewIntent")
+    val action = intent.action ?: return
+
+    if (action == CarContext.ACTION_NAVIGATE) {
+      intent.data?.schemeSpecificPart.let {
+        eventEmitter.voiceCommand(Arguments.createMap().apply {
+          putString("action", "NAVIGATE")
+          putString("query", it)
+        })
+      }
+      return
+    }
+    Log.d(TAG,"CarPlaySession.onNewIntent action: $action extras: ${intent.extras} data: ${intent.data}")
   }
 
   override fun onCarConfigurationChanged(configuration: Configuration) {
     // we should report this over the bridge
-    Log.d(TAG, "CarPlaySession.onCarConfigurationChanged ${configuration}")
+    Log.d(TAG, "CarPlaySession.onCarConfigurationChanged $configuration")
     eventEmitter.appearanceDidChange(carContext.isDarkMode)
   }
 

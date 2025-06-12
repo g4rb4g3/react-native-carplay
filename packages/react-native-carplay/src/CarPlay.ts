@@ -100,6 +100,9 @@ export type AndroidAutoAlertConfig = {
   actions?: CallbackAction[];
 };
 
+type VoiceCommandEvent = { action: "NAVIGATE"; query: string };
+export type OnVoiceCommandCallback = (voiceCommand: VoiceCommandEvent) => void;
+
 /**
  * A controller that manages all user interface elements appearing on your map displayed on the CarPlay screen.
  */
@@ -127,6 +130,7 @@ export class CarPlayInterface {
   private onAppearanceDidChangeCallbacks = new Set<OnAppearanceDidChangeCallback>();
   private onOnSafeAreaInsetsDidChangeCallbacks = new Set<OnSafeAreaInsetsDidChangeCallback>();
   private alertCallbacks: { [key: string]: () => void } = {};
+  private onVoiceCommandCallbacks = new Set<OnVoiceCommandCallback>();
 
   constructor() {
     registerHeadlessTask();
@@ -169,6 +173,10 @@ export class CarPlayInterface {
     if (Platform.OS === 'android') {
       this.emitter.addListener('telemetry', (telemetry: Telemetry) => {
         this.onTelemetryCallbacks.forEach(callback => callback(telemetry));
+      });
+
+      this.emitter.addListener('voiceCommand', (voiceCommand: VoiceCommandEvent) => {
+        this.onVoiceCommandCallbacks.forEach(callback => callback(voiceCommand));
       });
     }
 
@@ -259,6 +267,28 @@ export class CarPlayInterface {
     if (this.onTelemetryCallbacks.size === 0) {
       this.bridge.stopTelemetryObserver();
     }
+  };
+
+  /**
+   * @namespace Android
+   * @param callback voice command handler
+   */
+  public registerVoiceCommandListener = (callback: OnVoiceCommandCallback) => {
+    if (Platform.OS !== 'android') {
+      throw new Error('unsupported platform');
+    }
+    this.onVoiceCommandCallbacks.add(callback);
+  };
+
+  /**
+   * @namespace Android
+   * @param callback voice command handler
+   */
+  public unregisterVoiceCommandListener = (callback: OnVoiceCommandCallback) => {
+    if (Platform.OS !== 'android') {
+      throw new Error('unsupported platform');
+    }
+    this.onVoiceCommandCallbacks.delete(callback);
   };
 
   /**

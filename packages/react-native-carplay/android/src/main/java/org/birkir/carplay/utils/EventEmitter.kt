@@ -28,6 +28,7 @@ class EventEmitter(
     const val WillDisappear = "willDisappear"
     const val ButtonPressed = "buttonPressed"
     const val PoppedToRoot = "poppedToRoot"
+    const val VoiceCommand = "voiceCommand"
 
     // grid
     const val GridButtonPressed = "gridButtonPressed"
@@ -233,6 +234,10 @@ class EventEmitter(
     emit(AppearanceDidChange, Arguments.createMap().apply {
       putString("colorScheme", if (isDarkMode) "dark" else "light")
     })
+  }
+
+  fun voiceCommand(data: WritableMap) {
+    emit(VoiceCommand, data)
   }
 
   private fun emit(eventName: String, data: WritableMap = Arguments.createMap()) {
