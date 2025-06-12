@@ -21,10 +21,15 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
 import com.facebook.react.ReactApplication
 import com.facebook.react.ReactInstanceManager
+import com.facebook.react.bridge.LifecycleEventListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.birkir.carplay.utils.CarNavigationManager
 import org.birkir.carplay.utils.EventEmitter
+import org.birkir.carplay.utils.ReactContextResolver
 
-class CarPlayService : CarAppService() {
+class CarPlayService : CarAppService(), LifecycleEventListener {
   private lateinit var reactInstanceManager: ReactInstanceManager
   private lateinit var emitter: EventEmitter
   private lateinit var notificationManager: NotificationManager
@@ -67,7 +72,6 @@ class CarPlayService : CarAppService() {
     super.onCreate()
     reactInstanceManager = (application as ReactApplication).reactNativeHost.reactInstanceManager
 
-    emitter = EventEmitter(reactContext = reactInstanceManager.currentReactContext)
     notificationManager = this.getSystemService(NotificationManager::class.java)
 
     val appLabel = this.packageManager.getApplicationLabel(this.applicationInfo)
@@ -79,6 +83,12 @@ class CarPlayService : CarAppService() {
 
     CarNavigationManager.isNavigatingLiveData.observeForever(isNavigatingObserver)
     CarPlayModule.notifier.observeForever(notificationObserver)
+
+    CoroutineScope(Dispatchers.Main).launch {
+      val reactContext = ReactContextResolver.getReactContext(reactInstanceManager)
+      emitter = EventEmitter(reactContext)
+      reactContext.addLifecycleEventListener(this@CarPlayService)
+    }
   }
 
   override fun createHostValidator(): HostValidator {
@@ -113,6 +123,8 @@ class CarPlayService : CarAppService() {
           unbindService(connection)
           mServiceBound = false
         }
+
+        this@CarPlayService.stopForeground(STOP_FOREGROUND_REMOVE)
       }
     })
 
@@ -120,10 +132,12 @@ class CarPlayService : CarAppService() {
   }
 
   override fun onDestroy() {
-    super.onDestroy()
+    stopForeground(STOP_FOREGROUND_REMOVE)
     CarNavigationManager.isNavigatingLiveData.removeObserver(isNavigatingObserver)
     CarPlayModule.notifier.removeObserver(notificationObserver)
+    notificationManager.cancelAll()
     emitter.didFinish()
+    super.onDestroy()
   }
 
   private fun createNotification(title: String?, text: String?, largeIcon: Bitmap?): Notification {
@@ -156,5 +170,15 @@ class CarPlayService : CarAppService() {
     var TAG = "CarPlayService"
     private const val NOTIFICATION_ID = 2
     private const val CHANNEL_ID = "CarPlayServiceChannel"
+  }
+
+  override fun onHostDestroy() {
+    stopSelf()
+  }
+
+  override fun onHostPause() {
+  }
+
+  override fun onHostResume() {
   }
 }

@@ -23,14 +23,13 @@ import com.facebook.react.uimanager.ReactRootViewTagGenerator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import org.birkir.carplay.parser.RCTMapTemplate
 import org.birkir.carplay.screens.CarScreen
 import org.birkir.carplay.screens.CarScreenContext
 import org.birkir.carplay.utils.EventEmitter
+import org.birkir.carplay.utils.ReactContextResolver
 import java.util.UUID
 import java.util.WeakHashMap
-import kotlin.coroutines.resume
 
 class CarPlaySession(
   private val reactInstanceManager: ReactInstanceManager,
@@ -70,7 +69,7 @@ class CarPlaySession(
     }
 
     CoroutineScope(Dispatchers.Main).launch {
-      this@CarPlaySession.reactContext = getReactContext()
+      this@CarPlaySession.reactContext = ReactContextResolver.getReactContext(reactInstanceManager)
       this@CarPlaySession.eventEmitter = EventEmitter(reactContext)
       reactContext.addLifecycleEventListener(this@CarPlaySession)
 
@@ -106,28 +105,7 @@ class CarPlaySession(
   }
 
 
-  private suspend fun getReactContext(): ReactContext {
-    return suspendCancellableCoroutine { continuation ->
-      reactInstanceManager.currentReactContext?.let {
-        continuation.resume(it)
-        return@suspendCancellableCoroutine
-      }
 
-      val listener = object : ReactInstanceManager.ReactInstanceEventListener {
-        override fun onReactContextInitialized(context: ReactContext) {
-          reactInstanceManager.removeReactInstanceEventListener(this)
-          continuation.resume(context)
-        }
-      }
-      reactInstanceManager.addReactInstanceEventListener(listener)
-
-      continuation.invokeOnCancellation {
-        reactInstanceManager.removeReactInstanceEventListener(listener)
-      }
-
-      reactInstanceManager.createReactContextInBackground()
-    }
-  }
 
   private fun invokeStartTask() {
     try {
