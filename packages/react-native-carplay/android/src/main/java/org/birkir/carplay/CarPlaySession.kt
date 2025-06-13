@@ -138,6 +138,7 @@ class CarPlaySession(
     if (isCluster) {
       reactContext.getNativeModule(CarPlayModule::class.java)?.clusterScreens?.remove(screen)
     }
+    eventEmitter.didDisconnect()
   }
 
   override fun onNewIntent(intent: Intent) {

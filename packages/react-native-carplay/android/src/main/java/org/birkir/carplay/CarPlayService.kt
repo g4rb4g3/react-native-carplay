@@ -136,7 +136,6 @@ class CarPlayService : CarAppService(), LifecycleEventListener {
     CarNavigationManager.isNavigatingLiveData.removeObserver(isNavigatingObserver)
     CarPlayModule.notifier.removeObserver(notificationObserver)
     notificationManager.cancelAll()
-    emitter.didFinish()
     super.onDestroy()
   }
 

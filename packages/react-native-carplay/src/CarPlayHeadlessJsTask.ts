@@ -9,12 +9,12 @@ const headlessTask: TaskProvider = (): Task => _ =>
     let subscription: EmitterSubscription | null = null;
 
     try {
-      subscription = CarPlay.emitter.addListener('didFinish', () => {
+      subscription = CarPlay.emitter.addListener('didDisconnect', () => {
         try {
           subscription?.remove();
           resolve();
         } catch (error) {
-          console.error('Error in CarPlayHeadlessJsTask didFinish listener:', error);
+          console.error('Error in CarPlayHeadlessJsTask didDisconnect listener:', error);
           reject(error);
         }
       });
