@@ -15,6 +15,7 @@ import androidx.car.app.model.AlertCallback
 import androidx.car.app.model.Template
 import androidx.car.app.navigation.model.NavigationTemplate
 import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -45,6 +46,7 @@ data class CarNotification (val title: String?, val text: String?, val largeIcon
 class CarPlayModule internal constructor(private val reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext) {
   private lateinit var carContext: CarContext
+  private lateinit var sessionLifecycle: Lifecycle
   private var screenManager: ScreenManager? = null
   private val carScreens: WeakHashMap<String, CarScreen> = WeakHashMap()
   private val carScreenContexts: WeakHashMap<CarScreen, CarScreenContext> =
@@ -71,8 +73,9 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
     return NAME
   }
 
-  fun setCarContext(carContext: CarContext, currentCarScreen: CarScreen) {
+  fun setCarContext(carContext: CarContext, currentCarScreen: CarScreen, sessionLifecycle: Lifecycle) {
     this.carContext = carContext
+    this.sessionLifecycle = sessionLifecycle
     screenManager = currentCarScreen.screenManager
     carScreens["root"] = currentCarScreen
     carContext.onBackPressedDispatcher.addCallback(object : OnBackPressedCallback(true) {
@@ -129,7 +132,7 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
         carScreenContexts[screen]?.let { carScreenContext ->
           val template = parseTemplate(config, carScreenContext)
           val isSurfaceTemplate = config.hasKey("render") && config.getBoolean("render")
-          screen.setTemplate(template = template, invalidate = true, isSurfaceTemplate = isSurfaceTemplate)
+          screen.setTemplate(template = template, invalidate = true, isSurfaceTemplate = isSurfaceTemplate, sessionLifecycle = sessionLifecycle)
 
           if (template is NavigationTemplate) {
             config.getMap("trip")?.let {
@@ -138,7 +141,7 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
             clusterScreens.filter { it.key.template is NavigationTemplate }.forEach{
               val clusterTemplate = parseTemplate(config, it.value)
               // cluster can hold NavigationTemplate only and always has a surface to render to
-              it.key.setTemplate(template = clusterTemplate, invalidate = true, isSurfaceTemplate = true)
+              it.key.setTemplate(template = clusterTemplate, invalidate = true, isSurfaceTemplate = true, sessionLifecycle = sessionLifecycle)
             }
           }
         }
@@ -272,9 +275,11 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
 
   @ReactMethod
   fun invalidate(templateId: String) {
+    val screenManager = screenManager ?: return
+    val screen = getScreen(templateId) ?: return
+
     handler.post {
-      val screen = getScreen(templateId) ?: return@post
-      if (screen === screenManager!!.top) {
+      if (screen === screenManager.top) {
         Log.d(TAG, "Invalidated screen $templateId")
         screen.invalidate()
       }
@@ -417,7 +422,7 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
 
       val template = parseTemplate(templateConfig, carScreenContext)
       val isSurfaceTemplate = templateConfig.hasKey("render") && templateConfig.getBoolean("render")
-      screen.setTemplate(template = template, isSurfaceTemplate = isSurfaceTemplate)
+      screen.setTemplate(template = template, isSurfaceTemplate = isSurfaceTemplate, sessionLifecycle = sessionLifecycle)
       carScreens[templateId] = screen
 
       return screen

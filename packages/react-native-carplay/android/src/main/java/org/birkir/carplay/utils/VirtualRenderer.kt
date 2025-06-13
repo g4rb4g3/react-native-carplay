@@ -19,6 +19,9 @@ import androidx.car.app.AppManager
 import androidx.car.app.CarContext
 import androidx.car.app.SurfaceCallback
 import androidx.car.app.SurfaceContainer
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 import com.facebook.react.ReactApplication
 import com.facebook.react.ReactRootView
 import com.facebook.react.uimanager.DisplayMetricsHolder
@@ -31,7 +34,8 @@ import org.birkir.carplay.BuildConfig
 class VirtualRenderer(
   private val context: CarContext,
   private val moduleName: String,
-  private val isCluster: Boolean
+  private val isCluster: Boolean,
+  private val sessionLifecycle: Lifecycle
 ) {
 
   private var rootView: ReactRootView? = null
@@ -48,6 +52,15 @@ class VirtualRenderer(
     val reactContext =
       (context.applicationContext as ReactApplication).reactNativeHost.reactInstanceManager.currentReactContext
     emitter = EventEmitter(reactContext = reactContext, templateId = moduleName)
+
+    sessionLifecycle.addObserver(object : DefaultLifecycleObserver {
+      override fun onDestroy(owner: LifecycleOwner) {
+        (rootView?.parent as? ViewGroup)?.removeView(rootView)
+        rootView?.unmountReactApplication()
+        rootView = null
+        sessionLifecycle.removeObserver(this)
+      }
+    })
 
     context.getCarService(AppManager::class.java).setSurfaceCallback(object : SurfaceCallback {
 

@@ -51,7 +51,6 @@ class CarPlaySession(
 
   override fun onCreateScreen(intent: Intent): Screen {
     Log.d(TAG, "On create screen sessionId: ${sessionInfo.sessionId} displayType: ${sessionInfo.displayType} intent:  ${intent.action} ${intent.dataString}")
-    val lifecycle = lifecycle
     lifecycle.addObserver(this)
 
     screen = CarScreen(carContext, null, isCluster)
@@ -91,7 +90,8 @@ class CarPlaySession(
         screen.setTemplate(
           RCTMapTemplate(carContext, carScreenContext).parse(props),
           // cluster can hold NavigationTemplate only and always has a surface to render to
-          isSurfaceTemplate = true
+          isSurfaceTemplate = true,
+          sessionLifecycle = lifecycle
         )
 
         reactContext.getNativeModule(CarPlayModule::class.java)?.clusterScreens?.put(screen, carScreenContext)
@@ -103,9 +103,6 @@ class CarPlaySession(
 
     return screen
   }
-
-
-
 
   private fun invokeStartTask() {
     try {
@@ -129,7 +126,7 @@ class CarPlaySession(
       }
 
       val carModule = reactContext.getNativeModule(CarPlayModule::class.java)
-      carModule!!.setCarContext(carContext, screen)
+      carModule!!.setCarContext(carContext, screen, lifecycle)
 
     } catch (e: Exception) {
       e.printStackTrace()

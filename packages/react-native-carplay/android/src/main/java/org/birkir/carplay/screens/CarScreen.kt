@@ -1,6 +1,5 @@
 package org.birkir.carplay.screens
 
-import android.content.pm.PackageManager
 import android.util.Log
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
@@ -55,10 +54,10 @@ class CarScreen(
     })
   }
 
-  fun setTemplate(template: Template, invalidate: Boolean = false, isSurfaceTemplate: Boolean) {
+  fun setTemplate(template: Template, invalidate: Boolean = false, isSurfaceTemplate: Boolean, sessionLifecycle: Lifecycle) {
     if (isSurfaceTemplate && virtualRenderer == null) {
       Log.d(TAG, "firing up virtual renderer for $marker")
-      virtualRenderer = VirtualRenderer(carContext, marker!!, isCluster)
+      virtualRenderer = VirtualRenderer(carContext, marker!!, isCluster, sessionLifecycle)
     }
     this.template = template
 
