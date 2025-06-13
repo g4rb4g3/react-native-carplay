@@ -202,12 +202,15 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
 
   @ReactMethod
   fun popTemplate(animated: Boolean?) {
+    val screenManager = screenManager ?: return
+
+    if (screenManager.stackSize == 0) {
+      return
+    }
+
     handler.post {
-      screenManager!!.pop()
-      val topScreen = screenManager?.top
-      if (topScreen != null && topScreen is CarScreen) {
-        topScreen.invalidate()
-      }
+      screenManager.pop()
+      screenManager.top.invalidate()
     }
   }
 
