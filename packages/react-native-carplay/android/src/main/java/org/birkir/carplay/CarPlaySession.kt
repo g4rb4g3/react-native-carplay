@@ -139,6 +139,7 @@ class CarPlaySession(
       reactContext.getNativeModule(CarPlayModule::class.java)?.clusterScreens?.remove(screen)
     }
     eventEmitter.didDisconnect()
+    CarPlayTelemetryObserver.stopTelemetryObserver()
   }
 
   override fun onNewIntent(intent: Intent) {
