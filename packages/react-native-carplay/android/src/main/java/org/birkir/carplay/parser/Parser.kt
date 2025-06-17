@@ -15,6 +15,7 @@ import androidx.car.app.model.CarText
 import androidx.car.app.model.DateTimeWithZone
 import androidx.car.app.model.Distance
 import androidx.car.app.model.DistanceSpan
+import androidx.car.app.model.OnClickListener
 import androidx.car.app.model.Pane
 import androidx.car.app.model.PaneTemplate
 import androidx.car.app.model.Template
@@ -154,8 +155,7 @@ class Parser(
       return CarText.Builder(spanBuilder).build()
     }
 
-
-    fun parseAction(map: ReadableMap?, context: CarContext, eventEmitter: EventEmitter): Action {
+    fun parseAction(map: ReadableMap?, context: CarContext, onClickListener: OnClickListener?): Action {
       val type = map?.getString("type")
       if (type == "appIcon") {
         return Action.APP_ICON
@@ -164,7 +164,6 @@ class Parser(
       } else if (type == "pan") {
         return Action.PAN
       }
-      val id = map?.getString("id")
       val builder = Action.Builder()
       if (map != null) {
         map.getString("title")?.let {
@@ -182,19 +181,26 @@ class Parser(
           }
         }
         try {
-          builder.setBackgroundColor(Parser.parseColor(map.getString("backgroundColor")))
+          builder.setBackgroundColor(parseColor(map.getString("backgroundColor")))
         } catch (e: Exception) {
-          e.printStackTrace()
+          Log.e(TAG, "failed to set button background color", e)
         }
-        builder.setOnClickListener {
-          if (id != null) {
-            eventEmitter.buttonPressed(id)
-          }
+        onClickListener?.let {
+          builder.setOnClickListener(it)
         }
       }
       return builder.build()
     }
 
+    fun parseAction(map: ReadableMap?, context: CarContext, eventEmitter: EventEmitter): Action {
+      val id = map?.getString("id")
+
+      return parseAction(map, context) {
+        if (id != null) {
+          eventEmitter.buttonPressed(id)
+        }
+      }
+    }
 
     private fun parseDistanceUnit(value: String?): Int {
       return when (value) {

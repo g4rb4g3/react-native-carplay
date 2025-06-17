@@ -8,6 +8,7 @@ import type { TextConfiguration } from './TextConfiguration';
 import type { AndroidAutoAlertConfig, ImageSize } from 'src/CarPlay';
 import type { Action } from './Action';
 import { CarColor } from './CarColor';
+import { HeaderAction } from './Action';
 
 export interface InternalCarPlay extends NativeModule {
   checkForConnection(): void;
@@ -108,11 +109,16 @@ export interface InternalCarPlay extends NativeModule {
   notify: (title: string, text: string, largeIcon: unknown) => void;
   /**
    * Shows a message template to the user asking for specific permissions
+   * @param permissions Permissions to request from the user
    * @param message Message to show on the template
-   * @param actionTitle Primary button text
-   * @param actionColor Primary button color
-   * @Param permissions Permissions to request from the user
+   * @param primaryAction Primary action that can be pressed while the car is parked only
+   * @returns Promise in case permissions were granted or denied, or null in case a back button was specified has headerAction and pressed by the user
    * @namespace Android
    */
-  requestPermissions: (message: string, actionTitle: string, actionColor: CarColor, permissions: Array<String>) => Promise<{granted: Array<string>; denied: Array<string>}>;
+  requestPermissions: (
+    permissions: Array<String>,
+    message: string,
+    primaryAction: Action,
+    headerAction: HeaderAction,
+  ) => Promise<{ granted: Array<string>; denied: Array<string> } | null>;
 }

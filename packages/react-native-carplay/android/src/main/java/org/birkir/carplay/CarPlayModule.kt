@@ -406,14 +406,13 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
   }
 
   @ReactMethod
-  fun requestPermissions(message: String, actionTitle: String, actionColor: String, permissions: ReadableArray, promise: Promise) {
+  fun requestPermissions(permissions: ReadableArray, message: String, primaryAction: ReadableMap, headerAction: ReadableMap, promise: Promise) {
     val list = mutableListOf<String>()
     for (i in 0 until permissions.size()) {
       list.add(permissions.getString(i))
     }
-    val color = Parser.parseColor(actionColor)
     handler.post {
-      screenManager?.push(RCTPermissionRequestTemplate(carContext, message, actionTitle, color, list, promise))
+      screenManager?.push(RCTPermissionRequestTemplate(carContext, list, message, primaryAction, headerAction, promise))
     }
   }
 
