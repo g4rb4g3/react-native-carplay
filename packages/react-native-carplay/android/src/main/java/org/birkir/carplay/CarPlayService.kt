@@ -1,11 +1,13 @@
 package org.birkir.carplay
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
 import android.os.IBinder
 import android.util.Log
@@ -91,8 +93,14 @@ class CarPlayService : CarAppService(), LifecycleEventListener {
     }
   }
 
+  @SuppressLint("PrivateResource")
   override fun createHostValidator(): HostValidator {
-    return HostValidator.ALLOW_ALL_HOSTS_VALIDATOR
+    return if ((applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+      HostValidator.ALLOW_ALL_HOSTS_VALIDATOR
+    } else {
+      HostValidator.Builder(applicationContext)
+        .addAllowedHosts(androidx.car.app.R.array.hosts_allowlist_sample).build()
+    }
   }
 
   override fun onCreateSession(sessionInfo: SessionInfo): Session {
