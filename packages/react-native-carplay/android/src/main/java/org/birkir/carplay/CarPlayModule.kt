@@ -32,6 +32,7 @@ import com.facebook.react.bridge.WritableNativeMap
 import com.facebook.react.module.annotations.ReactModule
 import com.facebook.react.modules.debug.DevSettingsModule
 import org.birkir.carplay.parser.Parser
+import org.birkir.carplay.parser.RCTPermissionRequestTemplate
 import org.birkir.carplay.parser.TemplateParser
 import org.birkir.carplay.screens.CarScreen
 import org.birkir.carplay.screens.CarScreenContext
@@ -402,6 +403,18 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
       Parser.parseBitmap(it, carContext)
     }
     notification.postValue(CarNotification(title, text, icon))
+  }
+
+  @ReactMethod
+  fun requestPermissions(message: String, actionTitle: String, actionColor: String, permissions: ReadableArray, promise: Promise) {
+    val list = mutableListOf<String>()
+    for (i in 0 until permissions.size()) {
+      list.add(permissions.getString(i))
+    }
+    val color = Parser.parseColor(actionColor)
+    handler.post {
+      screenManager?.push(RCTPermissionRequestTemplate(carContext, message, actionTitle, color, list, promise))
+    }
   }
 
   private fun createCarScreenContext(screen: CarScreen, emitter: EventEmitter): CarScreenContext {

@@ -7,6 +7,7 @@ import type { TimeRemainingColor } from './TimeRemainingColor';
 import type { TextConfiguration } from './TextConfiguration';
 import type { AndroidAutoAlertConfig, ImageSize } from 'src/CarPlay';
 import type { Action } from './Action';
+import { CarColor } from './CarColor';
 
 export interface InternalCarPlay extends NativeModule {
   checkForConnection(): void;
@@ -105,4 +106,13 @@ export interface InternalCarPlay extends NativeModule {
    * @namespace Android
    */
   notify: (title: string, text: string, largeIcon: unknown) => void;
+  /**
+   * Shows a message template to the user asking for specific permissions
+   * @param message Message to show on the template
+   * @param actionTitle Primary button text
+   * @param actionColor Primary button color
+   * @Param permissions Permissions to request from the user
+   * @namespace Android
+   */
+  requestPermissions: (message: string, actionTitle: string, actionColor: CarColor, permissions: Array<String>) => Promise<{granted: Array<string>; denied: Array<string>}>;
 }
