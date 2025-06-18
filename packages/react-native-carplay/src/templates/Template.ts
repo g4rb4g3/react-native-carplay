@@ -119,7 +119,7 @@ export class Template<P> {
         if (isStateChangedEvent) {
           e = e.isVisible;
         }
-        const isAlertDismissedEvent = eventName === 'alertActionPressed';
+        const isAlertDismissedEvent = eventName === 'didDismissNavigationAlert';
 
         const callback =
           (e.templateId === this.id || isStateChangedEvent || isAlertDismissedEvent) && callbackName in config
