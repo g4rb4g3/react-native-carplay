@@ -46,5 +46,5 @@ export interface NavigationAlert {
   /**
    * identifier passed to all navigation alert handlers
    */
-  navigationAlertId: string;
+  navigationAlertId: number;
 }

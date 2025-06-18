@@ -251,10 +251,10 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
               AlertCallback.REASON_NOT_SUPPORTED -> "notSupported"
               else -> "unknown"
             }
-            eventEmitter.alertActionPressed(id, "cancel", reasonString)
+            eventEmitter.didDismissNavigationAlert(id, "cancel", reasonString)
           }
           override fun onDismiss() {
-            eventEmitter.alertActionPressed(id, "dismiss" )
+            eventEmitter.didDismissNavigationAlert(id, "dismiss" )
           }
         })
         props.getString("subtitle")?.let { setSubtitle(Parser.parseCarText(it, props)) }
@@ -265,6 +265,7 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
           }
         }
       }.build()
+      eventEmitter.willShowNavigationAlert(id)
       carContext.getCarService(AppManager::class.java).showAlert(alert)
     }
   }

@@ -1503,7 +1503,7 @@ RCT_EXPORT_METHOD(getRootTemplate: (RCTResponseSenderBlock)callback) {
     if ([json objectForKey:@"lightImage"] && [json objectForKey:@"darkImage"]) {
         imageSet = [[CPImageSet alloc] initWithLightContentImage:[RCTConvert UIImage:json[@"lightImage"]] darkContentImage:[RCTConvert UIImage:json[@"darkImage"]]];
     }
-    NSString *navigationAlertId = [json objectForKey:@"navigationAlertId"];
+    NSNumber *navigationAlertId = [json objectForKey:@"navigationAlertId"];
     
     CPAlertAction *secondaryAction = [json objectForKey:@"secondaryAction"] ? [self parseAlertAction:json[@"secondaryAction"] body:@{ @"templateId": templateId, @"secondary": @(YES), @"navigationAlertId": navigationAlertId }] : nil;
 
