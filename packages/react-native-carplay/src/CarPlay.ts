@@ -91,8 +91,8 @@ export interface SafeAreaInsetsEvent {
 
 export type OnSafeAreaInsetsDidChangeCallback = (safeAreaInsets: SafeAreaInsetsEvent) => void;
 
-type AlertCallbackArgs = { id: number, type: 'cancel' | 'dismiss', reason?: 'timeout' | 'userAction' | 'notSupported' | 'unknown' }
-type AlertCallback = (args: AlertCallbackArgs) => void;
+type DismissAlertCallbackArgs = { id: number, type: 'cancel' | 'dismiss', reason?: 'timeout' | 'userAction' | 'notSupported' | 'unknown' }
+type DismissAlertCallback = (args: DismissAlertCallbackArgs) => void;
 export type AndroidAutoAlertConfig = {
   id: number;
   title: string;
@@ -100,7 +100,7 @@ export type AndroidAutoAlertConfig = {
   subtitle?: string;
   image?: ImageSourcePropType;
   actions?: CallbackAction[];
-  onDismiss?: AlertCallback;
+  onDismiss?: DismissAlertCallback;
 };
 
 type VoiceCommandEvent = { action: "NAVIGATE"; query: string };
@@ -132,7 +132,7 @@ export class CarPlayInterface {
   private onClusterConnectCallbacks = new Set<OnClusterControllerConnectCallback>();
   private onAppearanceDidChangeCallbacks = new Set<OnAppearanceDidChangeCallback>();
   private onOnSafeAreaInsetsDidChangeCallbacks = new Set<OnSafeAreaInsetsDidChangeCallback>();
-  private alertCallbacks: { [key: string]: (() => void) | AlertCallback } = {};
+  private alertCallbacks: { [key: string]: (() => void) | DismissAlertCallback } = {};
   private onVoiceCommandCallbacks = new Set<OnVoiceCommandCallback>();
 
   constructor() {
@@ -198,8 +198,8 @@ export class CarPlayInterface {
     );
 
     this.emitter.addListener('alertActionPressed',       
-      (args: AlertCallbackArgs) => {
-        const callback = this.alertCallbacks[args.id] as AlertCallback | undefined;
+      (args: DismissAlertCallbackArgs) => {
+        const callback = this.alertCallbacks[args.id] as DismissAlertCallback | undefined;
         callback?.(args);
 
         this.alertCallbacks = {};
