@@ -91,8 +91,7 @@ export interface SafeAreaInsetsEvent {
 
 export type OnSafeAreaInsetsDidChangeCallback = (safeAreaInsets: SafeAreaInsetsEvent) => void;
 
-type DismissAlertCallbackArgs = { id: number, type: 'cancel' | 'dismiss', reason?: 'timeout' | 'userAction' | 'notSupported' | 'unknown' }
-type DismissAlertCallback = (args: DismissAlertCallbackArgs) => void;
+
 export type AndroidAutoAlertConfig = {
   id: number;
   title: string;
@@ -100,7 +99,6 @@ export type AndroidAutoAlertConfig = {
   subtitle?: string;
   image?: ImageSourcePropType;
   actions?: CallbackAction[];
-  onDismiss?: DismissAlertCallback;
 };
 
 type VoiceCommandEvent = { action: "NAVIGATE"; query: string };
@@ -132,7 +130,7 @@ export class CarPlayInterface {
   private onClusterConnectCallbacks = new Set<OnClusterControllerConnectCallback>();
   private onAppearanceDidChangeCallbacks = new Set<OnAppearanceDidChangeCallback>();
   private onOnSafeAreaInsetsDidChangeCallbacks = new Set<OnSafeAreaInsetsDidChangeCallback>();
-  private alertCallbacks: { [key: string]: (() => void) | DismissAlertCallback } = {};
+  private alertCallbacks: { [key: string]: () => void } = {};
   private onVoiceCommandCallbacks = new Set<OnVoiceCommandCallback>();
 
   constructor() {
@@ -192,15 +190,6 @@ export class CarPlayInterface {
         }
         const callback = this.alertCallbacks[buttonId] as () => void | undefined;;
         callback?.();
-
-        this.alertCallbacks = {};
-      },
-    );
-
-    this.emitter.addListener('alertActionPressed',       
-      (args: DismissAlertCallbackArgs) => {
-        const callback = this.alertCallbacks[args.id] as DismissAlertCallback | undefined;
-        callback?.(args);
 
         this.alertCallbacks = {};
       },
@@ -448,7 +437,7 @@ export class CarPlayInterface {
    */
   public alert(alert: AndroidAutoAlertConfig) {
     this.alertCallbacks = {};
-    const { actions, onDismiss, ...config } = alert;
+    const { actions, ...config } = alert;
 
     const updatedActions = actions?.map(action => {
       const id = getCallbackActionId();
@@ -456,10 +445,6 @@ export class CarPlayInterface {
       this.alertCallbacks[id] = onPress;
       return { ...rest, id };
     });
-
-    if (onDismiss) {
-      this.alertCallbacks[alert.id] = onDismiss;
-    }
 
     CarPlay.bridge.alert({ ...config, actions: updatedActions });
   }

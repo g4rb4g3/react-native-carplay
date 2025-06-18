@@ -44,6 +44,11 @@ export interface AndroidNavigationBaseTemplateConfig extends TemplateConfig {
    * Fired when the back button is pressed
    */
   onBackButtonPressed?(): void;
+
+  /**
+   * Fired when an alert dialog closes
+   */
+  onDidDismissAlert?(id: string, type: 'cancel' | 'dismiss', reason: 'timeout' | 'userAction' | 'notSupported' | 'unknown'): void;
 }
 
 export class AndroidNavigationBaseTemplate<
@@ -60,6 +65,7 @@ export class AndroidNavigationBaseTemplate<
       didEnableAutoDrive: 'onAutoDriveEnabled',
       didSelectListItem: 'onItemSelect',
       backButtonPressed: 'onBackButtonPressed',
+      alertActionPressed: 'onDidDismissAlert',
     };
   }
 
