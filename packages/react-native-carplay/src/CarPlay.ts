@@ -91,7 +91,6 @@ export interface SafeAreaInsetsEvent {
 
 export type OnSafeAreaInsetsDidChangeCallback = (safeAreaInsets: SafeAreaInsetsEvent) => void;
 
-
 export type AndroidAutoAlertConfig = {
   id: number;
   title: string;
@@ -188,7 +187,7 @@ export class CarPlayInterface {
           // we listen to alert actions only in here, these do not have a templateId
           return;
         }
-        const callback = this.alertCallbacks[buttonId] as () => void | undefined;;
+        const callback = this.alertCallbacks[buttonId];
         callback?.();
 
         this.alertCallbacks = {};
