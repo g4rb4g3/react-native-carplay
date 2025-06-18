@@ -22,15 +22,15 @@ export interface MapButtonEvent extends BaseEvent {
 export interface AlertActionEvent extends BaseEvent {
   secondary?: boolean;
   primary?: boolean;
-  navigationAlertId: string;
+  navigationAlertId: number;
 }
 
 export interface NavigationAlertShowEvent extends BaseEvent {
-  navigationAlertId: string;
+  navigationAlertId: number;
 }
 
 export interface NavigationAlertHideEvent extends BaseEvent {
-  navigationAlertId: string;
+  navigationAlertId: number;
   reason: 'none' | 'timeout' | 'system' | 'user';
 }
 
