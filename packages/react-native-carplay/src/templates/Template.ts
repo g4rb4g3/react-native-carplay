@@ -133,7 +133,8 @@ export class Template<P> {
       this.listenerSubscriptions.push(subscription);
     });
 
-    const types = Object.values<string>(AndroidRenderTemplates);
+    // all these templates call createTemplate on their own
+    const types = Object.values<string>(AndroidRenderTemplates).concat('list');
 
     if (!types.includes(this.type)) {
       const callbackFn = Platform.select({
