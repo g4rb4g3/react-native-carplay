@@ -134,7 +134,7 @@ export class Template<P> {
     });
 
     // all these templates call createTemplate on their own
-    const types = Object.values<string>(AndroidRenderTemplates).concat('list');
+    const types = Object.values<string>(AndroidRenderTemplates).concat(['list', 'signin']);
 
     if (!types.includes(this.type)) {
       const callbackFn = Platform.select({

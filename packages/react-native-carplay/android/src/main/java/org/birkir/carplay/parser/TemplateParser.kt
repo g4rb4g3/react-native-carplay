@@ -27,6 +27,7 @@ class TemplateParser internal constructor(
       "search" -> RCTSearchTemplate(context, carScreenContext)
       "tabbar" -> RCTTabTemplate(context, carScreenContext)
       "message" -> RCTMessageTemplate(context, carScreenContext)
+      "signin" -> RCTSignInTemplate(context, carScreenContext)
       else -> null
     }
 

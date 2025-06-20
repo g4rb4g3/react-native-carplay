@@ -116,7 +116,7 @@ export interface InternalCarPlay extends NativeModule {
    * @namespace Android
    */
   requestPermissions: (
-    permissions: Array<String>,
+    permissions: Array<string>,
     message: string,
     primaryAction: Action,
     headerAction: HeaderAction,

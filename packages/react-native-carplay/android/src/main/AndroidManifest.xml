@@ -1,5 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.birkir.carplay">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.birkir.carplay">
 
     <uses-permission android:name="androidx.car.app.NAVIGATION_TEMPLATES" />
     <uses-permission android:name="androidx.car.app.MAP_TEMPLATES" />
@@ -7,10 +6,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application>
-        <service
-            android:name=".CarPlayService"
-            android:exported="true"
-            android:foregroundServiceType="location">
+        <service android:name=".CarPlayService" android:exported="true" android:foregroundServiceType="location">
             <intent-filter>
                 <action android:name="org.birkir.carplay.APP_RELOAD" />
             </intent-filter>
@@ -26,10 +22,11 @@
                 <data android:scheme="geo" />
             </intent-filter>
         </service>
+
         <service android:name=".CarPlayHeadlessTaskService" />
 
-        <meta-data
-            android:name="androidx.car.app.minCarApiLevel"
-            android:value="1" />
+        <activity android:name=".activites.SignInWithGoogleActivity" />
+
+        <meta-data android:name="androidx.car.app.minCarApiLevel" android:value="1" />
     </application>
 </manifest>

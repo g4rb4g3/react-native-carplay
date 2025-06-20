@@ -36,6 +36,7 @@ import { MapWithPaneTemplate } from './templates/android/MapWithPaneTemplate';
 import { CallbackAction, getCallbackActionId } from './interfaces/Action';
 import { MapWithGridTemplate } from './templates/android/MapWithGridTemplate';
 import { OnTelemetryCallback, Telemetry, TelemetryPermission } from './interfaces/Telemetry';
+import { SignInTemplate } from './templates/android/SignInTemplate';
 
 const { RNCarPlay } = NativeModules as { RNCarPlay: InternalCarPlay };
 
@@ -56,7 +57,8 @@ export type PushableTemplates =
   | RoutePreviewNavigationTemplate
   | MapWithListTemplate
   | MapWithPaneTemplate
-  | MapWithGridTemplate;
+  | MapWithGridTemplate
+  | SignInTemplate;
 
 export type PresentableTemplates = AlertTemplate | ActionSheetTemplate | VoiceControlTemplate;
 
@@ -100,7 +102,7 @@ export type AndroidAutoAlertConfig = {
   actions?: CallbackAction[];
 };
 
-type VoiceCommandEvent = { action: "NAVIGATE"; query: string };
+type VoiceCommandEvent = { action: 'NAVIGATE'; query: string };
 export type OnVoiceCommandCallback = (voiceCommand: VoiceCommandEvent) => void;
 
 /**
