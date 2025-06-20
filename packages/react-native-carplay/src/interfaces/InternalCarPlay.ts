@@ -121,4 +121,8 @@ export interface InternalCarPlay extends NativeModule {
     primaryAction: Action,
     headerAction: HeaderAction,
   ) => Promise<{ granted: Array<string>; denied: Array<string> } | null>;
+  /**
+   * @namespace Android
+   */
+  getPlayServicesAvailable: () => Promise<boolean>;
 }

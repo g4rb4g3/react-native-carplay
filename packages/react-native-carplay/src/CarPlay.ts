@@ -464,6 +464,13 @@ export class CarPlayInterface {
     const icon = largeIcon == null ? null : Image.resolveAssetSource(largeIcon);
     CarPlay.bridge.notify(title, text, icon);
   }
+
+  /**
+   * @namespace Android
+   */
+  public getPlayServicesAvailable(): Promise<boolean> {
+    return CarPlay.bridge.getPlayServicesAvailable();
+  }
 }
 
 export const CarPlay = new CarPlayInterface();

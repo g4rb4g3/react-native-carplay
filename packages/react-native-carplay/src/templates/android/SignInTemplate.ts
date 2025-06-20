@@ -11,6 +11,10 @@ type SignInMethodQr = {
 };
 
 type SignInMethodGoogle = {
+  /**
+   * make sure to check CarPlay.getPlayServicesAvailable first
+   * in case play services are not available this will not work
+   */
   type: 'google';
   serverClientId: string;
   /**
