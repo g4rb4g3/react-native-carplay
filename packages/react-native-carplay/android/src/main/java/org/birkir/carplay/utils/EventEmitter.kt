@@ -141,7 +141,7 @@ class EventEmitter(
 
   fun didDismissNavigationAlert(id: Int, type: String, reason: String? = null) {
     emit(DidDismissNavigationAlert, Arguments.createMap().apply {
-      putInt("id", id)
+      putInt("navigationAlertId", id)
       putString("type", type)
       reason?.let { putString("reason", reason) }
     })

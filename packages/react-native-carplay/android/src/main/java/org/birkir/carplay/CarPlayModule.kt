@@ -247,7 +247,7 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
           override fun onCancel(reason: Int) {
             val reasonString = when (reason) {
               AlertCallback.REASON_TIMEOUT -> "timeout"
-              AlertCallback.REASON_USER_ACTION -> "userAction"
+              AlertCallback.REASON_USER_ACTION -> "user"
               AlertCallback.REASON_NOT_SUPPORTED -> "notSupported"
               else -> "unknown"
             }

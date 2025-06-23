@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { AppRegistry, Platform } from 'react-native';
-import { Template, TemplateConfig } from '../Template';
+import { NavigationAlertHideEvent, NavigationAlertShowEvent, Template, TemplateConfig } from '../Template';
 import { CarPlay } from '../../CarPlay';
 import {
   PanGestureWithTranslationEvent,
@@ -10,7 +10,6 @@ import {
 import { Action, AndroidAction, getCallbackActionId } from '../../interfaces/Action';
 import { Pane } from 'src/interfaces/Pane';
 import { AndroidGridButton, GridButton } from 'src/interfaces/GridButton';
-import { NavigationAlertShowEvent } from '../MapTemplate';
 
 export interface AndroidNavigationBaseTemplateConfig extends TemplateConfig {
   /**
@@ -49,7 +48,7 @@ export interface AndroidNavigationBaseTemplateConfig extends TemplateConfig {
   /**
    * Fired when an alert dialog closes
    */
-  onDidDismissAlert?(id: number, type: 'cancel' | 'dismiss', reason: 'timeout' | 'userAction' | 'notSupported' | 'unknown'): void;
+  onDidDismissAlert?(e: NavigationAlertHideEvent): void;
 
   /**
    * Fired when an alert dialog is about to be shown

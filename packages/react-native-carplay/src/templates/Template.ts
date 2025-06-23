@@ -14,6 +14,19 @@ export interface BarButtonEvent extends BaseEvent {
   id: string;
 }
 
+export interface NavigationAlertShowEvent extends BaseEvent {
+  navigationAlertId: number;
+}
+
+export interface NavigationAlertHideEvent extends BaseEvent {
+  navigationAlertId: number;
+  reason: 'none' | 'timeout' | 'system' | 'user' | 'notSupported' | 'unknown';
+  /**
+   * @namespace Android
+   */
+  type?: 'dismiss' | 'cancel';
+}
+
 export interface TemplateConfig {
   /**
    * Give the template your own ID. Must be unique.

@@ -6,7 +6,7 @@ import { TextConfiguration } from '../interfaces/TextConfiguration';
 import { TimeRemainingColor } from '../interfaces/TimeRemainingColor';
 import { TravelEstimates } from '../interfaces/TravelEstimates';
 import { Trip } from '../navigation/Trip';
-import { BaseEvent, Template, TemplateConfig } from './Template';
+import { BaseEvent, NavigationAlertHideEvent, NavigationAlertShowEvent, Template, TemplateConfig } from './Template';
 import { ListItem } from '../interfaces/ListItem';
 import { Action } from '../interfaces/Action';
 import { Header } from '../interfaces/Header';
@@ -23,15 +23,6 @@ export interface AlertActionEvent extends BaseEvent {
   secondary?: boolean;
   primary?: boolean;
   navigationAlertId: number;
-}
-
-export interface NavigationAlertShowEvent extends BaseEvent {
-  navigationAlertId: number;
-}
-
-export interface NavigationAlertHideEvent extends BaseEvent {
-  navigationAlertId: number;
-  reason: 'none' | 'timeout' | 'system' | 'user';
 }
 
 export interface PanEvent {
