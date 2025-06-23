@@ -135,7 +135,7 @@ class EventEmitter(
 
   fun willShowNavigationAlert(id: Int) {
     emit(WillShowNavigationAlert, Arguments.createMap().apply {
-      putInt("id", id)
+      putInt("navigationAlertId", id)
     })
   }
 

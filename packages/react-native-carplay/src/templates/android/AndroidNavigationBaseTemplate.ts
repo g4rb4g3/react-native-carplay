@@ -10,6 +10,7 @@ import {
 import { Action, AndroidAction, getCallbackActionId } from '../../interfaces/Action';
 import { Pane } from 'src/interfaces/Pane';
 import { AndroidGridButton, GridButton } from 'src/interfaces/GridButton';
+import { NavigationAlertShowEvent } from '../MapTemplate';
 
 export interface AndroidNavigationBaseTemplateConfig extends TemplateConfig {
   /**
@@ -54,7 +55,7 @@ export interface AndroidNavigationBaseTemplateConfig extends TemplateConfig {
    * Fired when an alert dialog is about to be shown
    * @param id 
    */
-  onWillShowAlert?(id: number): void;
+  onWillShowAlert?(e: NavigationAlertShowEvent): void;
 }
 
 export class AndroidNavigationBaseTemplate<
