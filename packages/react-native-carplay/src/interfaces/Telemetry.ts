@@ -11,12 +11,15 @@ export type AndroidAutoPermissions =
   | 'android.car.permission.CAR_ENERGY_PORTS'
   | 'android.car.permission.CAR_SPEED';
 
+export type PermissionRequestResult = { granted: Array<string>; denied: Array<string> } | null;
+
 type BaseTelemetryItem = {
   /**
    * timestamp in seconds when the value was received on native side
    */
   timestamp: number;
 };
+
 type NumericTelemetryItem = BaseTelemetryItem & {
   value: number;
 };
