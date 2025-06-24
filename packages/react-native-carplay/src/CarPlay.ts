@@ -35,7 +35,7 @@ import { MapWithListTemplate } from './templates/android/MapWithListTemplate';
 import { MapWithPaneTemplate } from './templates/android/MapWithPaneTemplate';
 import { CallbackAction, getCallbackActionId } from './interfaces/Action';
 import { MapWithGridTemplate } from './templates/android/MapWithGridTemplate';
-import { OnTelemetryCallback, Telemetry, TelemetryPermission } from './interfaces/Telemetry';
+import { AndroidAutoPermissions, OnTelemetryCallback, Telemetry } from './interfaces/Telemetry';
 import { SignInTemplate } from './templates/android/SignInTemplate';
 
 const { RNCarPlay } = NativeModules as { RNCarPlay: InternalCarPlay };
@@ -205,11 +205,11 @@ export class CarPlayInterface {
 
   /**
    * Silently checks permissions without requesting them from the user
-   * @param requestedPermissions TelemetryPermission you want to check
+   * @param requestedPermissions AndroidAutoPermissions you want to check
    * @returns
    */
   public async checkTelemetryPermissions(
-    requestedPermissions: TelemetryPermission[],
+    requestedPermissions: AndroidAutoPermissions[],
   ): Promise<boolean> {
     const state = await Promise.all(
       requestedPermissions.map(permission =>
@@ -221,13 +221,13 @@ export class CarPlayInterface {
 
   /**
    * Checks and requests permissions for telemetry data at the same time.
-   * @param requestedPermissions A list of permissions to request for telemetry data.
+   * @param requestedPermissions A list of permissions to request from the user.
    *
    * This is only available on Android Auto.
    * @returns
    */
   public async requestTelemetryPermissions(
-    requestedPermissions: TelemetryPermission[],
+    requestedPermissions: Array<AndroidAutoPermissions>,
   ): Promise<boolean> {
     if (Platform.OS !== 'android') {
       // no-op on iOS
