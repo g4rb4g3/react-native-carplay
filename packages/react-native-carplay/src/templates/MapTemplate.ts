@@ -6,7 +6,7 @@ import { TextConfiguration } from '../interfaces/TextConfiguration';
 import { TimeRemainingColor } from '../interfaces/TimeRemainingColor';
 import { TravelEstimates } from '../interfaces/TravelEstimates';
 import { Trip } from '../navigation/Trip';
-import { BaseEvent, Template, TemplateConfig } from './Template';
+import { BaseEvent, NavigationAlertHideEvent, NavigationAlertShowEvent, Template, TemplateConfig } from './Template';
 import { ListItem } from '../interfaces/ListItem';
 import { Action } from '../interfaces/Action';
 import { Header } from '../interfaces/Header';
@@ -22,16 +22,7 @@ export interface MapButtonEvent extends BaseEvent {
 export interface AlertActionEvent extends BaseEvent {
   secondary?: boolean;
   primary?: boolean;
-  navigationAlertId: string;
-}
-
-export interface NavigationAlertShowEvent extends BaseEvent {
-  navigationAlertId: string;
-}
-
-export interface NavigationAlertHideEvent extends BaseEvent {
-  navigationAlertId: string;
-  reason: 'none' | 'timeout' | 'system' | 'user';
+  navigationAlertId: number;
 }
 
 export interface PanEvent {

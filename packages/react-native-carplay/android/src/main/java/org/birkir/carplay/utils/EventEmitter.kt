@@ -135,9 +135,15 @@ class EventEmitter(
     })
   }
 
-  fun alertActionPressed(id: Int, type: String, reason: String? = null) {
-    emit(AlertActionPressed, Arguments.createMap().apply {
-      putInt("id", id)
+  fun willShowNavigationAlert(id: Int) {
+    emit(WillShowNavigationAlert, Arguments.createMap().apply {
+      putInt("navigationAlertId", id)
+    })
+  }
+
+  fun didDismissNavigationAlert(id: Int, type: String, reason: String? = null) {
+    emit(DidDismissNavigationAlert, Arguments.createMap().apply {
+      putInt("navigationAlertId", id)
       putString("type", type)
       reason?.let { putString("reason", reason) }
     })

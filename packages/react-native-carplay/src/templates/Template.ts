@@ -14,6 +14,19 @@ export interface BarButtonEvent extends BaseEvent {
   id: string;
 }
 
+export interface NavigationAlertShowEvent extends BaseEvent {
+  navigationAlertId: number;
+}
+
+export interface NavigationAlertHideEvent extends BaseEvent {
+  navigationAlertId: number;
+  reason: 'none' | 'timeout' | 'system' | 'user' | 'notSupported' | 'unknown';
+  /**
+   * @namespace Android
+   */
+  type?: 'dismiss' | 'cancel';
+}
+
 export interface TemplateConfig {
   /**
    * Give the template your own ID. Must be unique.
@@ -119,9 +132,10 @@ export class Template<P> {
         if (isStateChangedEvent) {
           e = e.isVisible;
         }
+        const isAlertDismissedEvent = eventName === 'didDismissNavigationAlert' || eventName === 'willShowNavigationAlert';
 
         const callback =
-          (e.templateId === this.id || isStateChangedEvent) && callbackName in config
+          (e.templateId === this.id || isStateChangedEvent || isAlertDismissedEvent) && callbackName in config
             ? config[callbackName as keyof typeof config]
             : null;
         if (callback == null || typeof callback !== 'function') {

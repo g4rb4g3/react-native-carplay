@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { AppRegistry, Platform } from 'react-native';
-import { Template, TemplateConfig } from '../Template';
+import { NavigationAlertHideEvent, NavigationAlertShowEvent, Template, TemplateConfig } from '../Template';
 import { CarPlay } from '../../CarPlay';
 import {
   PanGestureWithTranslationEvent,
@@ -44,6 +44,17 @@ export interface AndroidNavigationBaseTemplateConfig extends TemplateConfig {
    * Fired when the back button is pressed
    */
   onBackButtonPressed?(): void;
+
+  /**
+   * Fired when an alert dialog closes
+   */
+  onDidDismissAlert?(e: NavigationAlertHideEvent): void;
+
+  /**
+   * Fired when an alert dialog is about to be shown
+   * @param id 
+   */
+  onWillShowAlert?(e: NavigationAlertShowEvent): void;
 }
 
 export class AndroidNavigationBaseTemplate<
@@ -60,6 +71,8 @@ export class AndroidNavigationBaseTemplate<
       didEnableAutoDrive: 'onAutoDriveEnabled',
       didSelectListItem: 'onItemSelect',
       backButtonPressed: 'onBackButtonPressed',
+      didDismissNavigationAlert: 'onDidDismissAlert',
+      willShowNavigationAlert: 'onWillShowAlert',
     };
   }
 
