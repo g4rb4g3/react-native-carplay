@@ -75,6 +75,8 @@ class EventEmitter(
     const val AlertActionPressed = "alertActionPressed"
     const val SelectedPreviewForTrip = "selectedPreviewForTrip"
     const val StartedTrip = "startedTrip"
+
+    const val DidSignIn = "didSignIn"
   }
 
   fun telemetry(data: WritableMap) {
@@ -239,6 +241,10 @@ class EventEmitter(
 
   fun voiceCommand(data: WritableMap) {
     emit(VoiceCommand, data)
+  }
+
+  fun didSignIn(data: WritableMap) {
+    emit(DidSignIn, data)
   }
 
   private fun emit(eventName: String, data: WritableMap = Arguments.createMap()) {

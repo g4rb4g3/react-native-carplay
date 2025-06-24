@@ -35,7 +35,16 @@ import { MapWithListTemplate } from './templates/android/MapWithListTemplate';
 import { MapWithPaneTemplate } from './templates/android/MapWithPaneTemplate';
 import { CallbackAction, getCallbackActionId } from './interfaces/Action';
 import { MapWithGridTemplate } from './templates/android/MapWithGridTemplate';
-import { OnTelemetryCallback, Telemetry, TelemetryPermission } from './interfaces/Telemetry';
+import {
+  AndroidAutoPermissions,
+  OnTelemetryCallback,
+  PermissionRequestResult,
+  Telemetry,
+} from './interfaces/Telemetry';
+import { SignInTemplate } from './templates/android/SignInTemplate';
+import { permission } from 'process';
+import { Action } from './interfaces/Action';
+import { HeaderAction } from './interfaces/Action';
 
 const { RNCarPlay } = NativeModules as { RNCarPlay: InternalCarPlay };
 
@@ -56,7 +65,8 @@ export type PushableTemplates =
   | RoutePreviewNavigationTemplate
   | MapWithListTemplate
   | MapWithPaneTemplate
-  | MapWithGridTemplate;
+  | MapWithGridTemplate
+  | SignInTemplate;
 
 export type PresentableTemplates = AlertTemplate | ActionSheetTemplate | VoiceControlTemplate;
 
@@ -100,7 +110,7 @@ export type AndroidAutoAlertConfig = {
   actions?: CallbackAction[];
 };
 
-type VoiceCommandEvent = { action: "NAVIGATE"; query: string };
+type VoiceCommandEvent = { action: 'NAVIGATE'; query: string };
 export type OnVoiceCommandCallback = (voiceCommand: VoiceCommandEvent) => void;
 
 /**
@@ -203,42 +213,45 @@ export class CarPlayInterface {
 
   /**
    * Silently checks permissions without requesting them from the user
-   * @param requestedPermissions TelemetryPermission you want to check
+   * @param requestedPermissions AndroidAutoPermissions you want to check
    * @returns
    */
-  public async checkTelemetryPermissions(
-    requestedPermissions: TelemetryPermission[],
+  public async checkAndroidAutoPermissions(
+    requestedPermissions: AndroidAutoPermissions[],
   ): Promise<boolean> {
+    if (Platform.OS !== 'android') {
+      return Promise.resolve(false);
+    }
+
     const state = await Promise.all(
       requestedPermissions.map(permission =>
         PermissionsAndroid.check(permission as Permission).catch(() => false),
       ),
     );
+
     return state.every(granted => granted);
   }
 
   /**
-   * Checks and requests permissions for telemetry data at the same time.
-   * @param requestedPermissions A list of permissions to request for telemetry data.
-   *
-   * This is only available on Android Auto.
-   * @returns
+   * Shows a message template to the user asking for specific permissions
+   * @param permissions Permissions to request from the user
+   * @param message Message to show on the template
+   * @param primaryAction Primary action that can be pressed while the car is parked only
+   * @returns Promise in case permissions were granted or denied or null in case a back button was specified as headerAction and was pressed by the user
+   * @namespace Android
    */
-  public async requestTelemetryPermissions(
-    requestedPermissions: TelemetryPermission[],
-  ): Promise<boolean> {
+  public async requestAndroidAutoPermissions(
+    permissions: Array<AndroidAutoPermissions>,
+    message: string,
+    primaryAction: Omit<Action, 'id' | 'type'> & { type: 'custom' },
+    headerAction: HeaderAction,
+  ): Promise<PermissionRequestResult> {
     if (Platform.OS !== 'android') {
       // no-op on iOS
-      return Promise.resolve(false);
+      return Promise.resolve(null);
     }
 
-    const permissionStatus = await PermissionsAndroid.requestMultiple(
-      requestedPermissions as unknown as Permission[],
-    );
-
-    return Object.values(permissionStatus).every(
-      status => status === PermissionsAndroid.RESULTS.GRANTED,
-    );
+    return CarPlay.bridge.requestPermissions(permissions, message, primaryAction, headerAction);
   }
 
   /**
@@ -461,6 +474,13 @@ export class CarPlayInterface {
   public notify(title: string, text: string, largeIcon?: ImageSourcePropType) {
     const icon = largeIcon == null ? null : Image.resolveAssetSource(largeIcon);
     CarPlay.bridge.notify(title, text, icon);
+  }
+
+  /**
+   * @namespace Android
+   */
+  public getPlayServicesAvailable(): Promise<boolean> {
+    return CarPlay.bridge.getPlayServicesAvailable();
   }
 }
 

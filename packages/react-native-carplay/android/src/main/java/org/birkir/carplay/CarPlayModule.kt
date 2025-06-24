@@ -38,6 +38,7 @@ import org.birkir.carplay.screens.CarScreen
 import org.birkir.carplay.screens.CarScreenContext
 import org.birkir.carplay.utils.CarNavigationManager
 import org.birkir.carplay.utils.EventEmitter
+import org.birkir.carplay.utils.PlayService
 import java.lang.UnsupportedOperationException
 import java.util.WeakHashMap
 
@@ -415,6 +416,11 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
     handler.post {
       screenManager?.push(RCTPermissionRequestTemplate(carContext, list, message, primaryAction, headerAction, promise))
     }
+  }
+
+  @ReactMethod
+  fun getPlayServicesAvailable(promise: Promise) {
+    promise.resolve(PlayService.isPlayServiceAvailable(carContext))
   }
 
   private fun createCarScreenContext(screen: CarScreen, emitter: EventEmitter): CarScreenContext {

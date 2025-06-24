@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import { CarPlay } from '../CarPlay';
-import { Action } from '../interfaces/Action';
+import { Action, CallbackAction, getCallbackActionId } from '../interfaces/Action';
 import { ListItem } from '../interfaces/ListItem';
 import { ListItemUpdate } from '../interfaces/ListItemUpdate';
 import { ListSection } from '../interfaces/ListSection';
@@ -102,7 +102,12 @@ export interface ListTemplateConfig extends TemplateConfig {
    * Sets the ActionStrip for this template or null to not display any.
    * This template allows up to 2 Actions. Of the 2 allowed Actions, one of them can contain a title as set via setTitle. Otherwise, only Actions with icons are allowed.
    */
-  actions?: [Action<'custom'>] | [Action<'custom'>, Action<'custom'>];
+  actions?:
+    | [CallbackAction | Action<'appIcon' | 'custom'>]
+    | [
+        CallbackAction | Action<'appIcon' | 'custom'>,
+        CallbackAction | Action<'appIcon' | 'custom'>,
+      ];
 }
 
 /**
@@ -124,6 +129,10 @@ export class ListTemplate extends Template<ListTemplateConfig> {
       backButtonPressed: 'onBackButtonPressed',
     };
   }
+
+  private pressableCallbacks: {
+    [key: string]: () => void;
+  } = {};
 
   constructor(public config: ListTemplateConfig) {
     super(config);
@@ -157,6 +166,63 @@ export class ListTemplate extends Template<ListTemplateConfig> {
     );
 
     this.listenerSubscriptions.push(subscription);
+
+    subscription = CarPlay.emitter.addListener(
+      'buttonPressed',
+      ({ buttonId, templateId }: { templateId?: string; buttonId: string }) => {
+        if (templateId !== this.id) {
+          return;
+        }
+
+        const callback = this.pressableCallbacks[buttonId];
+        if (callback == null || typeof callback !== 'function') {
+          return;
+        }
+        callback();
+      },
+    );
+
+    this.listenerSubscriptions.push(subscription);
+
+    const callbackFn = Platform.select({
+      android: ({ error }: { error?: string } = {}) => {
+        error && console.error(error);
+      },
+    });
+
+    this.config = this.parseConfig({ type: this.type, ...config });
+    CarPlay.bridge.createTemplate(this.id, this.config, callbackFn);
+  }
+
+  public parseConfig(config: any) {
+    const { actions, ...rest }: { actions: Array<CallbackAction | Action<'appIcon' | 'custom'>> } =
+      config;
+    const updatedConfig: Omit<ListTemplateConfig, 'actions'> & { actions?: Array<Action> } = rest;
+    const callbackIds: Array<string> = [];
+
+    if (actions != null) {
+      updatedConfig.actions = actions.map(action => {
+        const id = 'id' in action ? action.id : getCallbackActionId();
+        if (id == null) {
+          return action;
+        }
+
+        callbackIds.push(id);
+
+        if (!('onPress' in action)) {
+          return action;
+        }
+        const { onPress, ...actionRest } = action;
+        this.pressableCallbacks[id] = onPress;
+        return { ...actionRest, id };
+      });
+    }
+
+    this.pressableCallbacks = Object.fromEntries(
+      Object.entries(this.pressableCallbacks).filter(([id]) => callbackIds.includes(id)),
+    );
+
+    return super.parseConfig(updatedConfig);
   }
 
   public updateSections = (sections: ListSection[]) => {

@@ -1,12 +1,17 @@
-// Android Auto Telemetry Permissions
-export const CarFuelPermission = 'com.google.android.gms.permission.CAR_FUEL';
-export const CarSpeedPermission = 'com.google.android.gms.permission.CAR_SPEED';
-export const CarMileagePermission = 'com.google.android.gms.permission.CAR_MILEAGE';
+import { Permission } from 'react-native/types';
 
-export type TelemetryPermission =
-  | typeof CarFuelPermission
-  | typeof CarSpeedPermission
-  | typeof CarMileagePermission;
+export type AndroidAutoPermissions =
+  | Permission
+  | 'com.google.android.gms.permission.CAR_FUEL'
+  | 'com.google.android.gms.permission.CAR_SPEED'
+  | 'com.google.android.gms.permission.CAR_MILEAGE'
+  | 'android.car.permission.CAR_ENERGY'
+  | 'android.car.permission.CAR_INFO'
+  | 'android.car.permission.CAR_EXTERIOR_ENVIRONMENT'
+  | 'android.car.permission.CAR_ENERGY_PORTS'
+  | 'android.car.permission.CAR_SPEED';
+
+export type PermissionRequestResult = { granted: Array<string>; denied: Array<string> } | null;
 
 type BaseTelemetryItem = {
   /**
@@ -14,6 +19,7 @@ type BaseTelemetryItem = {
    */
   timestamp: number;
 };
+
 type NumericTelemetryItem = BaseTelemetryItem & {
   value: number;
 };
