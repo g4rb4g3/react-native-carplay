@@ -63,9 +63,11 @@ class VirtualRenderer(
     })
 
     context.getCarService(AppManager::class.java).setSurfaceCallback(object : SurfaceCallback {
-
       var height = 0
       var width = 0
+
+      var stableArea = Rect(0, 0, 0, 0)
+      var visibleArea = Rect(0, 0, 0, 0)
 
       override fun onSurfaceAvailable(surfaceContainer: SurfaceContainer) {
         val surface = surfaceContainer.surface
@@ -99,14 +101,36 @@ class VirtualRenderer(
       }
 
       override fun onVisibleAreaChanged(visibleArea: Rect) {
-        if (visibleArea.top == 0 && visibleArea.bottom == 0 && visibleArea.left == 0 && visibleArea.right == 0) {
-          // we sometimes get no proper visible area on the cluster display
+        this.visibleArea = visibleArea
+        updateSafeAreaInsets()
+      }
+
+      override fun onStableAreaChanged(stableArea: Rect) {
+        this.stableArea = stableArea
+        updateSafeAreaInsets()
+      }
+
+      fun updateSafeAreaInsets() {
+        if (maxOf(stableArea.top, stableArea.left, stableArea.bottom, stableArea.right) == 0) {
+          // wait for stable area to be initialized first
           return
         }
-        val top = (visibleArea.top / BuildConfig.CARPLAY_SCALE_FACTOR).toInt()
-        val bottom = ((height - visibleArea.bottom) / BuildConfig.CARPLAY_SCALE_FACTOR).toInt()
-        val left = (visibleArea.left / BuildConfig.CARPLAY_SCALE_FACTOR).toInt()
-        val right = ((width - visibleArea.right) / BuildConfig.CARPLAY_SCALE_FACTOR).toInt()
+
+        if (maxOf(visibleArea.top, visibleArea.left, visibleArea.bottom, visibleArea.right) == 0) {
+          // wait for visible area to be initialized first
+          return
+        }
+
+        // 12dp seems to be the default margin on AA for the ETA widget and the maneuver so use it as default
+        val additionalMarginLeft = if (stableArea.left != visibleArea.left) 0 else 12
+        val additionalMarginRight = if (stableArea.right == visibleArea.right && visibleArea.right != width) 0 else 12
+        val additionalMarginTop = if (visibleArea.top != stableArea.top || (visibleArea.top > 0 && stableArea.top > 0 && visibleArea.right < width)) 0 else 12
+        val additionalMarginBottom = if (stableArea.bottom != visibleArea.bottom) 0 else 12
+
+        val top = ((visibleArea.top + additionalMarginTop) / BuildConfig.CARPLAY_SCALE_FACTOR).toInt()
+        val bottom = ((height - visibleArea.bottom + additionalMarginBottom) / BuildConfig.CARPLAY_SCALE_FACTOR).toInt()
+        val left = ((visibleArea.left + additionalMarginLeft) / BuildConfig.CARPLAY_SCALE_FACTOR).toInt()
+        val right = ((width - visibleArea.right + additionalMarginRight) / BuildConfig.CARPLAY_SCALE_FACTOR).toInt()
         emitter.safeAreaInsetsDidChange(top = top, bottom = bottom, left = left, right = right)
       }
     })
