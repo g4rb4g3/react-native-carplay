@@ -211,13 +211,14 @@ class EventEmitter(
     })
   }
 
-  fun safeAreaInsetsDidChange(top: Int, bottom: Int, left: Int, right: Int) {
+  fun safeAreaInsetsDidChange(top: Int, bottom: Int, left: Int, right: Int, isLegacyLayout: Boolean) {
     emit(SafeAreaInsetsDidChange, Arguments.createMap().apply {
       putInt("top", top)
       putInt("bottom", bottom)
       putInt("left", left)
       putInt("right", right)
       putString("id", templateId)
+      putBoolean("isLegacyLayout", isLegacyLayout)
     })
   }
 

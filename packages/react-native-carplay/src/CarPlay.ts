@@ -42,7 +42,6 @@ import {
   Telemetry,
 } from './interfaces/Telemetry';
 import { SignInTemplate } from './templates/android/SignInTemplate';
-import { permission } from 'process';
 import { Action } from './interfaces/Action';
 import { HeaderAction } from './interfaces/Action';
 
@@ -97,6 +96,11 @@ export interface SafeAreaInsetsEvent {
    * id that was specified on the MapTemplate, Dashboard or Cluster
    */
   id: string;
+  /**
+   * legacy layout is considered as anything before Material Expression 3, on these the insets are quite buggy
+   * @namespace Android
+   */
+  isLegacyLayout?: boolean;
 }
 
 export type OnSafeAreaInsetsDidChangeCallback = (safeAreaInsets: SafeAreaInsetsEvent) => void;
