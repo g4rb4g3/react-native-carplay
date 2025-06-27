@@ -46,7 +46,7 @@ class VirtualRenderer(
    */
   private val mainScreenDensity = DisplayMetricsHolder.getScreenDisplayMetrics().density
   private val virtualScreenDensity = context.resources.displayMetrics.density
-  val scale = virtualScreenDensity / mainScreenDensity * BuildConfig.CARPLAY_SCALE_FACTOR
+  val reactNativeScale = virtualScreenDensity / mainScreenDensity * BuildConfig.CARPLAY_SCALE_FACTOR
 
   init {
     val reactContext =
@@ -68,16 +68,19 @@ class VirtualRenderer(
       var height = 0
       var width = 0
       var minMargin = Int.MAX_VALUE
+      // 12dp seems to be the default margin on AA for the ETA widget and the maneuver so use it as fallback
+      val defaultMargin = (12.0 * context.resources.displayMetrics.density).toInt()
 
       var stableArea = Rect(0, 0, 0, 0)
       var visibleArea = Rect(0, 0, 0, 0)
+      val scale = BuildConfig.CARPLAY_SCALE_FACTOR * context.resources.displayMetrics.density
 
       override fun onSurfaceAvailable(surfaceContainer: SurfaceContainer) {
         val surface = surfaceContainer.surface
         if (surface == null) {
           Log.w(TAG, "surface is null")
         } else {
-          renderPresentation(surfaceContainer)
+          renderPresentation(surfaceContainer, scale)
         }
 
         height = surfaceContainer.height
@@ -85,21 +88,21 @@ class VirtualRenderer(
       }
 
       override fun onClick(x: Float, y: Float) {
-        emitter.didPress(x = x / scale, y = y / scale)
+        emitter.didPress(x = x / reactNativeScale, y = y / reactNativeScale)
       }
 
       override fun onScale(focusX: Float, focusY: Float, scaleFactor: Float) {
         emitter.didUpdatePinchGesture(
-          focusX = focusX / scale,
-          focusY = focusY / scale,
+          focusX = focusX / reactNativeScale,
+          focusY = focusY / reactNativeScale,
           scaleFactor = scaleFactor
         )
       }
 
       override fun onScroll(distanceX: Float, distanceY: Float) {
         emitter.didUpdatePanGestureWithTranslation(
-          distanceX = -distanceX / scale,
-          distanceY = -distanceY / scale
+          distanceX = -distanceX / reactNativeScale,
+          distanceY = -distanceY / reactNativeScale
         )
       }
 
@@ -131,40 +134,34 @@ class VirtualRenderer(
         }
 
         if (minMargin == 0) {
-          // 12dp seems to be the default margin on AA for the ETA widget and the maneuver so use it as fallback
-          val margin = 12
-
           // probably legacy AA layout
-          val additionalMarginLeft = if (stableArea.left == visibleArea.left) margin else 0
-          val additionalMarginRight = if (stableArea.right == visibleArea.right && visibleArea.right != width) 0 else margin
-          val additionalMarginTop = if (visibleArea.top != stableArea.top || (visibleArea.top > 0 && stableArea.top > 0 && visibleArea.right < width)) 0 else margin
-          val additionalMarginBottom = if (stableArea.bottom == visibleArea.bottom) margin else 0
+          val additionalMarginLeft = if (stableArea.left == visibleArea.left) defaultMargin else 0
+          val additionalMarginRight = if (stableArea.right == visibleArea.right && visibleArea.right != width) 0 else defaultMargin
+          val additionalMarginTop = if (visibleArea.top != stableArea.top || (visibleArea.top > 0 && stableArea.top > 0 && visibleArea.right < width)) 0 else defaultMargin
+          val additionalMarginBottom = if (stableArea.bottom == visibleArea.bottom) defaultMargin else 0
 
-          val top = ((visibleArea.top + additionalMarginTop) / BuildConfig.CARPLAY_SCALE_FACTOR).toInt()
-          val bottom = ((height - visibleArea.bottom + additionalMarginBottom) / BuildConfig.CARPLAY_SCALE_FACTOR).toInt()
-          val left = ((visibleArea.left + additionalMarginLeft) / BuildConfig.CARPLAY_SCALE_FACTOR).toInt()
-          val right = ((width - visibleArea.right + additionalMarginRight) / BuildConfig.CARPLAY_SCALE_FACTOR).toInt()
+          val top = ((visibleArea.top + additionalMarginTop) / scale).toInt()
+          val bottom = ((height - visibleArea.bottom + additionalMarginBottom) / scale).toInt()
+          val left = ((visibleArea.left + additionalMarginLeft) / scale).toInt()
+          val right = ((width - visibleArea.right + additionalMarginRight) / scale).toInt()
           emitter.safeAreaInsetsDidChange(top = top, bottom = bottom, left = left, right = right, isLegacyLayout = true)
         } else {
           // material expression 3 seems to apply always some margin and never reports 0
 
-          // 12dp seems to be the default margin on AA for the ETA widget and the maneuver so use it as fallback
-          val margin = (12 / BuildConfig.CARPLAY_SCALE_FACTOR).toInt()
+          val additionalMarginLeft = if (stableArea.left == visibleArea.left) defaultMargin else 0
+          val additionalMarginRight = if (stableArea.right == visibleArea.right) defaultMargin else 0
 
-          val additionalMarginLeft = if (stableArea.left == visibleArea.left) margin else 0
-          val additionalMarginRight = if (stableArea.right == visibleArea.right) margin else 0
-
-          val top = (visibleArea.top / BuildConfig.CARPLAY_SCALE_FACTOR).toInt().coerceAtLeast(margin)
-          val bottom = ((height - visibleArea.bottom) / BuildConfig.CARPLAY_SCALE_FACTOR).toInt().coerceAtLeast(margin)
-          val left = ((visibleArea.left + additionalMarginLeft) / BuildConfig.CARPLAY_SCALE_FACTOR).toInt().coerceAtLeast(margin)
-          val right = ((width - visibleArea.right + additionalMarginRight) / BuildConfig.CARPLAY_SCALE_FACTOR).toInt().coerceAtLeast(margin)
+          val top = (visibleArea.top.coerceAtLeast(defaultMargin) / scale).toInt()
+          val bottom = ((height - visibleArea.bottom).coerceAtLeast(defaultMargin) / scale).toInt()
+          val left = ((visibleArea.left + additionalMarginLeft).coerceAtLeast(defaultMargin) / scale).toInt()
+          val right = ((width - visibleArea.right + additionalMarginRight).coerceAtLeast(defaultMargin) / scale).toInt()
           emitter.safeAreaInsetsDidChange(top = top, bottom = bottom, left = left, right = right, isLegacyLayout = false)
         }
       }
     })
   }
 
-  private fun renderPresentation(container: SurfaceContainer) {
+  private fun renderPresentation(container: SurfaceContainer, scale: Float) {
     val name = if (isCluster) "AndroidAutoClusterMapTemplate" else "AndroidAutoMapTemplate"
     val manager = context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
     val display = manager.createVirtualDisplay(
@@ -175,7 +172,7 @@ class VirtualRenderer(
       container.surface,
       DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION,
     )
-    val presentation = MapPresentation(context, display.display, moduleName, container)
+    val presentation = MapPresentation(context, display.display, moduleName, container, scale)
     presentation.show()
   }
 
@@ -183,7 +180,8 @@ class VirtualRenderer(
     private val context: CarContext,
     display: Display,
     private val moduleName: String,
-    private val surfaceContainer: SurfaceContainer
+    private val surfaceContainer: SurfaceContainer,
+    private val scale: Float
   ) : Presentation(context, display) {
     override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
@@ -201,18 +199,18 @@ class VirtualRenderer(
           putString("id", moduleName)
           putString("colorScheme", if (context.isDarkMode) "dark" else "light")
           putBundle("window", Bundle().apply {
-            putInt("height", (surfaceContainer.height / BuildConfig.CARPLAY_SCALE_FACTOR).toInt())
-            putInt("width", (surfaceContainer.width / BuildConfig.CARPLAY_SCALE_FACTOR).toInt())
-            putFloat("scale", context.resources.displayMetrics.density)
+            putInt("height", (surfaceContainer.height / scale).toInt())
+            putInt("width", (surfaceContainer.width / scale).toInt())
+            putFloat("scale", scale)
           })
         }
 
         rootView = ReactRootView(context.applicationContext).apply {
           layoutParams = FrameLayout.LayoutParams(
-            (surfaceContainer.width / scale).toInt(), (surfaceContainer.height / scale).toInt()
+            (surfaceContainer.width / reactNativeScale).toInt(), (surfaceContainer.height / reactNativeScale).toInt()
           )
-          scaleX = scale
-          scaleY = scale
+          scaleX = reactNativeScale
+          scaleY = reactNativeScale
           pivotX = 0f
           pivotY = 0f
           setBackgroundColor(Color.DKGRAY)
