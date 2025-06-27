@@ -226,16 +226,26 @@ export class ListTemplate extends Template<ListTemplateConfig> {
   }
 
   public updateSections = (sections: ListSection[]) => {
-    this.config.sections = sections;
-    return CarPlay.bridge.updateListTemplateSections(this.id, this.parseConfig(sections));
+    this.config = { ...this.config, sections };
+    return CarPlay.bridge.updateListTemplateSections(this.id, super.parseConfig(sections));
   };
 
   public updateListTemplateItem = (config: ListItemUpdate) => {
-    const section = this.config.sections?.[config.sectionIndex];
-    if (section) {
-      section.items[config.itemIndex] = config;
-    }
-    return CarPlay.bridge.updateListTemplateItem(this.id, this.parseConfig(config));
+    const { itemIndex: updateIndex, sectionIndex: updateSection, ...update } = config;
+    this.config = {
+      ...this.config,
+      sections: this.config.sections?.map((section, index) =>
+        index === updateSection
+          ? {
+              ...section,
+              items: section.items.map((item, itemIndex) =>
+                itemIndex === updateIndex ? update : item,
+              ),
+            }
+          : section,
+      ),
+    };
+    return CarPlay.bridge.updateListTemplateItem(this.id, super.parseConfig(config));
   };
 
   public getMaximumListItemCount() {
