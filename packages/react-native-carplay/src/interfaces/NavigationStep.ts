@@ -1,4 +1,4 @@
-import { ImageResolvedAssetSource, ImageSourcePropType } from 'react-native';
+import { ImageSourcePropType } from 'react-native';
 import { TravelEstimates } from './TravelEstimates';
 
 export enum CarIconSpanAlignment {
@@ -46,7 +46,7 @@ export type NavigationStep = {
 export type NavigationDestination = {
   address?: string;
   name: string;
-  image?: ImageResolvedAssetSource;
+  image?: ImageSourcePropType;
   destinationTravelEstimate: AndroidTravelEstimates;
 };
 
