@@ -1,5 +1,7 @@
 package org.birkir.carplay
 
+import android.os.Handler
+import android.os.Looper
 import androidx.car.app.CarContext
 import androidx.car.app.hardware.CarHardwareManager
 import androidx.car.app.hardware.common.CarValue
@@ -19,49 +21,47 @@ object CarPlayTelemetryObserver {
   private var carContext: CarContext? = null
   private var eventEmitter: EventEmitter? = null
 
+  private val telemetry = Arguments.createMap()
+  private var isTelemetryDirty = false
+  private val handler = Handler(Looper.getMainLooper())
+
   private val mModelListener = OnCarDataAvailableListener<Model> {
-    synchronized(
-      this
-    ) {
-      val vehicle = Arguments.createMap()
-      if (it.name.status == CarValue.STATUS_SUCCESS) {
-        vehicle.putMap("name", Arguments.createMap().apply {
-          putString("value", it.name.value)
-          putDouble("timestamp", it.name.timestampMillis / 1000.0)
-        })
-      }
-      if (it.manufacturer.status == CarValue.STATUS_SUCCESS) {
-        vehicle.putMap("manufacturer", Arguments.createMap().apply {
-          putString("value", it.manufacturer.value)
-          putDouble("timestamp", it.manufacturer.timestampMillis / 1000.0)
-        })
-      }
-      if (it.year.status == CarValue.STATUS_SUCCESS) {
-        it.year.value?.let { year ->
-          vehicle.putMap("year", Arguments.createMap().apply {
-            putInt("value", year)
-            putDouble("timestamp", it.year.timestampMillis / 1000.0)
-          })
-        } ?: run {
-          vehicle.putMap("year", Arguments.createMap().apply {
-            putNull("value")
-            putDouble("timestamp", it.year.timestampMillis / 1000.0)
-          })
-        }
-      }
-      eventEmitter?.telemetry(Arguments.createMap().apply {
-        putMap("vehicle", vehicle)
+    val vehicle = Arguments.createMap()
+    if (it.name.status == CarValue.STATUS_SUCCESS) {
+      vehicle.putMap("name", Arguments.createMap().apply {
+        putString("value", it.name.value)
+        putDouble("timestamp", it.name.timestampMillis / 1000.0)
       })
     }
+    if (it.manufacturer.status == CarValue.STATUS_SUCCESS) {
+      vehicle.putMap("manufacturer", Arguments.createMap().apply {
+        putString("value", it.manufacturer.value)
+        putDouble("timestamp", it.manufacturer.timestampMillis / 1000.0)
+      })
+    }
+    if (it.year.status == CarValue.STATUS_SUCCESS) {
+      it.year.value?.let { year ->
+        vehicle.putMap("year", Arguments.createMap().apply {
+          putInt("value", year)
+          putDouble("timestamp", it.year.timestampMillis / 1000.0)
+        })
+      } ?: run {
+        vehicle.putMap("year", Arguments.createMap().apply {
+          putNull("value")
+          putDouble("timestamp", it.year.timestampMillis / 1000.0)
+        })
+      }
+    }
+    eventEmitter?.telemetry(Arguments.createMap().apply {
+      putMap("vehicle", vehicle)
+    })
   }
 
   private val mEnergyLevelListener = OnCarDataAvailableListener<EnergyLevel> { carEnergyLevel ->
     synchronized(
-      this
+      telemetry
     ) {
-      // REVISIT: throttle this to avoid flooding the event bus?
       val timestamp = System.currentTimeMillis() / 1000.0
-      val telemetry = Arguments.createMap()
 
       if (carEnergyLevel.batteryPercent.status == CarValue.STATUS_SUCCESS) {
         carEnergyLevel.batteryPercent.value?.let {
@@ -75,6 +75,8 @@ object CarPlayTelemetryObserver {
             putDouble("timestamp", timestamp)
           })
         }
+
+        isTelemetryDirty = true
       }
       if (carEnergyLevel.fuelPercent.status == CarValue.STATUS_SUCCESS) {
         carEnergyLevel.fuelPercent.value?.let {
@@ -88,6 +90,8 @@ object CarPlayTelemetryObserver {
             putDouble("timestamp", timestamp)
           })
         }
+
+        isTelemetryDirty = true
       }
       if (carEnergyLevel.rangeRemainingMeters.status == CarValue.STATUS_SUCCESS) {
         carEnergyLevel.rangeRemainingMeters.value?.let {
@@ -101,18 +105,16 @@ object CarPlayTelemetryObserver {
             putDouble("timestamp", timestamp)
           })
         }
-      }
 
-      eventEmitter?.telemetry(telemetry)
+        isTelemetryDirty = true
+      }
     }
   }
 
   private val mSpeedListener = OnCarDataAvailableListener<Speed> { carSpeed ->
     synchronized(
-      this
+      telemetry
     ) {
-      // REVISIT: throttle this to avoid flooding the event bus?
-      val telemetry = Arguments.createMap()
       if (carSpeed.displaySpeedMetersPerSecond.status == CarValue.STATUS_SUCCESS) {
         val timestamp = System.currentTimeMillis() / 1000.0
         carSpeed.displaySpeedMetersPerSecond.value?.let {
@@ -127,18 +129,16 @@ object CarPlayTelemetryObserver {
             putDouble("timestamp", timestamp)
           })
         }
-      }
 
-      eventEmitter?.telemetry(telemetry)
+        isTelemetryDirty = true
+      }
     }
   }
 
   private val mMileageListener = OnCarDataAvailableListener<Mileage> { carMileage ->
     synchronized(
-      this
+      telemetry
     ) {
-      val telemetry = Arguments.createMap()
-
       if (carMileage.odometerMeters.status == CarValue.STATUS_SUCCESS) {
         val timestamp = System.currentTimeMillis() / 1000.0
         carMileage.odometerMeters.value?.let {
@@ -152,12 +152,24 @@ object CarPlayTelemetryObserver {
             putDouble("timestamp", timestamp)
           })
         }
-      }
 
-      eventEmitter?.telemetry(telemetry)
+        isTelemetryDirty = true
+      }
     }
   }
 
+  private val emitter = object : Runnable {
+    override fun run() {
+      if (isTelemetryDirty) {
+        synchronized(telemetry) {
+          eventEmitter?.telemetry(Arguments.createMap().apply { merge(telemetry) })
+          isTelemetryDirty = false
+        }
+      }
+
+      handler.postDelayed(this, BuildConfig.CARPLAY_TELEMETRY_INTERVAL_MS)
+    }
+  }
 
   fun startTelemetryObserver(
     carContext: CarContext, eventEmitter: EventEmitter, promise: Promise
@@ -203,6 +215,9 @@ object CarPlayTelemetryObserver {
       carInfo.addMileageListener(carHardwareExecutor, mMileageListener)
     } catch (_: SecurityException) {
     }
+
+    handler.post(emitter)
+
     isRunning = true
 
     promise.resolve("Telemetry observer started")
@@ -230,6 +245,9 @@ object CarPlayTelemetryObserver {
       } catch (_: SecurityException) {
       }
     }
+
+    handler.removeCallbacks(emitter)
+
     isRunning = false
   }
 }

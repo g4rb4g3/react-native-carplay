@@ -64,6 +64,7 @@ android {
     buildConfigField "float", "CARPLAY_SCALE_FACTOR", "1.5f"
     buildConfigField "long", "CARPLAY_CLUSTER_SPLASH_DELAY_MS", "1000"
     buildConfigField "long", "CARPLAY_CLUSTER_SPLASH_DURATION_MS", "500"
+    buildConfigField "long", "CARPLAY_TELEMETRY_INTERVAL_MS", "4000"
   }
 
   buildTypes {
