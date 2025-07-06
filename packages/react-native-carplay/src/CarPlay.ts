@@ -455,6 +455,13 @@ export class CarPlayInterface {
     this.alertCallbacks = {};
     const { actions, ...config } = alert;
 
+    let duration = alert.duration;
+
+    if (duration <= 0) {
+      console.warn(`Duration should be a positive number, using 500ms instead of ${duration}ms`);
+      duration = 500;
+    }
+
     const updatedActions = actions?.map(action => {
       const id = getCallbackActionId();
       const { onPress, ...rest } = action;
@@ -462,7 +469,7 @@ export class CarPlayInterface {
       return { ...rest, id };
     });
 
-    CarPlay.bridge.alert({ ...config, actions: updatedActions });
+    CarPlay.bridge.alert({ ...config, actions: updatedActions, duration });
   }
 
   /**
