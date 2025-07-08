@@ -4,6 +4,7 @@ import android.app.Presentation
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Rect
+import android.graphics.Typeface
 import android.hardware.display.DisplayManager
 import android.os.Bundle
 import android.util.Log
@@ -272,7 +273,7 @@ class VirtualRenderer(
     val applicationIcon = AppInfo.getApplicationIcon(context)
     val appName = AppInfo.getApplicationLabel(context)
 
-    val maxIconSize = (0.25 * maxOf(containerHeight, containerWidth)).toInt()
+    val maxIconSize = minOf(64, (0.25 * maxOf(containerHeight, containerWidth)).toInt())
 
     return LinearLayout(context).apply {
       orientation = LinearLayout.VERTICAL
@@ -295,6 +296,7 @@ class VirtualRenderer(
 
       val appNameView = TextView(context).apply {
         text = appName
+        setTypeface(typeface, Typeface.BOLD)
         setTextColor(Color.WHITE)
         textSize = 20f
         layoutParams = LinearLayout.LayoutParams(
