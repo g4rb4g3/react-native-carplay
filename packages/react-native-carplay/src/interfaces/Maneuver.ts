@@ -1,6 +1,18 @@
 import { TravelEstimates } from './TravelEstimates';
 import { ColorValue, ImageSourcePropType, ProcessedColorValue } from 'react-native';
 
+export interface AttributedInstructionVariant {
+  text: string;
+  /**
+   * attachment image size can be up to 64x16 points.
+   */
+  image?: ImageSourcePropType;
+  /**
+   * position of the image in the text, if missing the image will be appended to the text
+   */
+  imagePosition?: number;
+}
+
 /**
  * Navigation instructions and distance from the previous maneuver.
  */
@@ -24,6 +36,7 @@ export interface Maneuver {
    */
   tintSymbolImage?: null | number | ColorValue | ProcessedColorValue;
   instructionVariants: string[];
+  attributedInstructionVariants?: AttributedInstructionVariant[];
 
   // not yet implemented
   dashboardInstructionVariants?: string[];

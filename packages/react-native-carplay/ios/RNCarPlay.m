@@ -1431,6 +1431,42 @@ RCT_EXPORT_METHOD(getRootTemplate: (RCTResponseSenderBlock)callback) {
     if ([json objectForKey:@"instructionVariants"]) {
         [maneuver setInstructionVariants:[RCTConvert NSStringArray:json[@"instructionVariants"]]];
     }
+
+    if ([json objectForKey:@"attributedInstructionVariants"]) {
+        // Create an array to hold attributed instruction variants
+        NSMutableArray<NSAttributedString *> *attributedInstructions = [NSMutableArray array];
+        
+        // Process each item in the array from JSON
+        NSArray *variants = [json objectForKey:@"attributedInstructionVariants"];
+        for (NSDictionary *variant in variants) {
+            NSString *text = [variant objectForKey:@"text"] ?: @"";
+            NSInteger imagePosition = NSNotFound;
+            if ([variant objectForKey:@"imagePosition"]) {
+                imagePosition = [variant[@"imagePosition"] integerValue];
+            }
+            
+            NSMutableAttributedString *instruction = [[NSMutableAttributedString alloc] initWithString:text];
+
+            // If there's an image to attach
+            if ([variant objectForKey:@"image"]) {
+                UIImage *image = [RCTConvert UIImage:variant[@"image"]];
+                if (image) {
+                    NSTextAttachment *attachment = [NSTextAttachment textAttachmentWithImage:image];
+                    NSAttributedString *container = [NSAttributedString attributedStringWithAttachment:attachment];
+
+                    if (imagePosition != NSNotFound) {
+                        [instruction insertAttributedString:container atIndex:imagePosition];
+                    } else {
+                        [instruction appendAttributedString:container];
+                    }
+                }
+            }
+
+            [attributedInstructions addObject:instruction];
+        }
+        
+        [maneuver setAttributedInstructionVariants:attributedInstructions];
+    }
     
     if (@available(iOS 17.4, *)) {
         if ([json objectForKey:@"maneuverType"]) {
