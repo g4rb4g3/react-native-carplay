@@ -1232,7 +1232,14 @@ RCT_EXPORT_METHOD(getRootTemplate: (RCTResponseSenderBlock)callback) {
         BOOL _showsDisclosureIndicator = [[item objectForKey:@"showsDisclosureIndicator"] isEqualToNumber:[NSNumber numberWithInt:1]];
         NSString *_detailText = [item objectForKey:@"detailText"];
         NSString *_text = [item objectForKey:@"text"];
+        NSString *_id = [item objectForKey:@"id"];
         NSObject *_imageObj = [item objectForKey:@"image"];
+        
+        NSMutableDictionary *userInfo = [NSMutableDictionary dictionary];
+        userInfo[@"index"] = @(listIndex);
+        if (_id != nil) {
+            userInfo[@"id"] = _id;
+        }
         
         NSArray *_imageItems = [item objectForKey:@"images"];
         NSArray *_imageUrls = [item objectForKey:@"imgUrls"];
@@ -1253,7 +1260,8 @@ RCT_EXPORT_METHOD(getRootTemplate: (RCTResponseSenderBlock)callback) {
                 NSString *imgUrlString = [RCTConvert NSString:item[@"imgUrl"]];
                 [self updateItemImageWithURL:_item imgUrl:imgUrlString];
             }
-            [_item setUserInfo:@{ @"index": @(listIndex) }];
+            
+            [_item setUserInfo:userInfo];
             [_items addObject:_item];
         } else {
             // parse images
@@ -1302,8 +1310,8 @@ RCT_EXPORT_METHOD(getRootTemplate: (RCTResponseSenderBlock)callback) {
                         [self sendTemplateEventWithName:template name:@"didSelectListItemRowImage" json:@{ @"index": @(listIndex), @"imageIndex": @(index)}];
                     }
                 }];
-                    
-                [_item setUserInfo:@{ @"index": @(listIndex) }];
+                
+                [_item setUserInfo:userInfo];
                 [_items addObject:_item];
             }
             
@@ -1755,8 +1763,15 @@ RCT_EXPORT_METHOD(getRootTemplate: (RCTResponseSenderBlock)callback) {
 
 - (void)searchTemplate:(CPSearchTemplate *)searchTemplate selectedResult:(CPListItem *)item completionHandler:(void (^)(void))completionHandler {
     NSNumber* index = [item.userInfo objectForKey:@"index"];
-    //todo add id to match android auto
-    [self sendTemplateEventWithName:searchTemplate name:@"selectedResult" json:@{ @"index": index }];
+    NSString* _id = [item.userInfo objectForKey:@"id"];
+    
+    NSMutableDictionary *json = [NSMutableDictionary dictionary];
+    json[@"index"] = index;
+    if (_id != nil) {
+        json[@"id"] = _id;
+    }
+    
+    [self sendTemplateEventWithName:searchTemplate name:@"selectedResult" json:json];
     self.selectedResultBlock = completionHandler;
 }
 
@@ -1773,8 +1788,15 @@ RCT_EXPORT_METHOD(getRootTemplate: (RCTResponseSenderBlock)callback) {
 
 - (void)listTemplate:(CPListTemplate *)listTemplate didSelectListItem:(CPListItem *)item completionHandler:(void (^)(void))completionHandler {
     NSNumber* index = [item.userInfo objectForKey:@"index"];
-    //todo add id to match android auto
-    [self sendTemplateEventWithName:listTemplate name:@"didSelectListItem" json:@{ @"index": index }];
+    NSString* _id = [item.userInfo objectForKey:@"id"];
+    
+    NSMutableDictionary *json = [NSMutableDictionary dictionary];
+    json[@"index"] = index;
+    if (_id != nil) {
+        json[@"id"] = _id;
+    }
+    
+    [self sendTemplateEventWithName:listTemplate name:@"didSelectListItem" json:json];
     self.selectedResultBlock = completionHandler;
 }
 
