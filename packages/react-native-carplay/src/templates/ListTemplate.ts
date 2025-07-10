@@ -50,7 +50,7 @@ export interface ListTemplateConfig extends TemplateConfig {
    * When the returned promise is resolved the spinner will hide.
    * @param item Object with the selected index
    */
-  onItemSelect?(item: { templateId: string; index: number; id: string }): Promise<void>;
+  onItemSelect?(item: { templateId: string; index: number; id: ListItem["id"] }): Promise<void>;
 
   /**
    * Fired when image row item is selected.
