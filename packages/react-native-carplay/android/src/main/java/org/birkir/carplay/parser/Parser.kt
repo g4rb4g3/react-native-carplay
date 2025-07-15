@@ -1,5 +1,6 @@
 package org.birkir.carplay.parser
 
+import android.content.Context
 import android.content.res.Resources.NotFoundException
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -64,7 +65,7 @@ class Parser(
       }.build()
     }
 
-    fun parseBitmap(map: ReadableMap, context: CarContext): Bitmap {
+    fun parseBitmap(map: ReadableMap, context: Context): Bitmap {
       val uri = map.getString("uri")
       if (uri?.startsWith("res://") == true) {
         val name = Uri.parse(uri).path?.substring(1)
