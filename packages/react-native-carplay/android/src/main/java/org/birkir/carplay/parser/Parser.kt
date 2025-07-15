@@ -43,6 +43,7 @@ import com.facebook.react.views.imagehelper.ImageSource
 import org.birkir.carplay.screens.CarScreenContext
 import org.birkir.carplay.utils.EventEmitter
 import java.util.TimeZone
+import kotlin.math.max
 
 class Parser(
   context: CarContext, carScreenContext: CarScreenContext
@@ -108,7 +109,7 @@ class Parser(
       )
       val builder = TravelEstimate.Builder(
         Distance.create(
-          map.getDouble("distanceRemaining"),
+          max(map.getDouble("distanceRemaining"), 0.0),
           parseDistanceUnit(map.getString("distanceUnits"))
         ),
         destinationDateTime,
@@ -155,7 +156,10 @@ class Parser(
     }
 
     fun parseDistance(map: ReadableMap): Distance {
-      return Distance.create(map.getDouble("distance"), parseDistanceUnit(map.getString("distanceUnits")))
+      return Distance.create(
+        max(map.getDouble("distance"), 0.0),
+        parseDistanceUnit(map.getString("distanceUnits"))
+      )
     }
 
     fun parseCarText(title: String, props: ReadableMap?): CarText {
