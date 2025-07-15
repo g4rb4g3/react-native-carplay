@@ -123,7 +123,11 @@ class Parser(
       map.getString("tripText")?.let {
         builder.setTripText(CarText.Builder(it).build())
       }
-      builder.setRemainingTimeSeconds(map.getDouble("timeRemaining").toLong())
+      var remainingTime = map.getDouble("timeRemaining").toLong()
+      if (remainingTime < 0) {
+        remainingTime = TravelEstimate.REMAINING_TIME_UNKNOWN
+      }
+      builder.setRemainingTimeSeconds(remainingTime)
       return builder.build()
     }
 
