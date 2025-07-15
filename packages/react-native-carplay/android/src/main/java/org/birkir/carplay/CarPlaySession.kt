@@ -138,12 +138,21 @@ class CarPlaySession(
     if (isCluster) {
       reactContext.getNativeModule(CarPlayModule::class.java)?.clusterScreens?.remove(screen)
     }
+    if (!this::eventEmitter.isInitialized) {
+      Log.w(TAG, "onDestroy eventEmitter not initialized yet!")
+      return
+    }
     eventEmitter.didDisconnect()
     CarPlayTelemetryObserver.stopTelemetryObserver()
   }
 
   override fun onNewIntent(intent: Intent) {
     val action = intent.action ?: return
+
+    if (!this::eventEmitter.isInitialized) {
+      Log.w(TAG, "onNewIntent eventEmitter not initialized yet!")
+      return
+    }
 
     if (action == CarContext.ACTION_NAVIGATE) {
       intent.data?.schemeSpecificPart.let {
@@ -158,7 +167,10 @@ class CarPlaySession(
   }
 
   override fun onCarConfigurationChanged(configuration: Configuration) {
-    // we should report this over the bridge
+    if (!this::eventEmitter.isInitialized) {
+      Log.w(TAG, "onCarConfigurationChanged eventEmitter not initialized yet!")
+      return
+    }
     Log.d(TAG, "CarPlaySession.onCarConfigurationChanged $configuration")
     eventEmitter.appearanceDidChange(carContext.isDarkMode)
   }
