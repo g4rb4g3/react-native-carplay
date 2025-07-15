@@ -27,6 +27,7 @@ import com.facebook.react.bridge.LifecycleEventListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.birkir.carplay.parser.Parser
 import org.birkir.carplay.utils.CarNavigationManager
 import org.birkir.carplay.utils.EventEmitter
 import org.birkir.carplay.utils.ReactContextResolver
@@ -64,7 +65,10 @@ class CarPlayService : CarAppService(), LifecycleEventListener {
 
   private val notificationObserver = Observer<CarNotification?> {
     it?.let {
-      val notification = createNotification(it.title, it.text, it.largeIcon)
+      val icon = it.largeIcon?.let { icon ->
+        Parser.parseBitmap(icon, context = this@CarPlayService)
+      }
+      val notification = createNotification(it.title, it.text, icon)
       notificationManager.notify(NOTIFICATION_ID, notification)
     }
   }

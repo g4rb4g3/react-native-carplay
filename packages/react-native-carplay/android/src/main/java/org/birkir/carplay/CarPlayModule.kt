@@ -42,7 +42,7 @@ import org.birkir.carplay.utils.PlayService
 import java.lang.UnsupportedOperationException
 import java.util.WeakHashMap
 
-data class CarNotification (val title: String?, val text: String?, val largeIcon: Bitmap?)
+data class CarNotification (val title: String?, val text: String?, val largeIcon: ReadableMap?)
 
 @ReactModule(name = CarPlayModule.NAME)
 class CarPlayModule internal constructor(private val reactContext: ReactApplicationContext) :
@@ -401,10 +401,7 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
 
   @ReactMethod
   fun notify(title: String, text: String, largeIcon: ReadableMap?) {
-    val icon = largeIcon?.let {
-      Parser.parseBitmap(it, carContext)
-    }
-    notification.postValue(CarNotification(title, text, icon))
+    notification.postValue(CarNotification(title, text, largeIcon))
   }
 
   @ReactMethod
