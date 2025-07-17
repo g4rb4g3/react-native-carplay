@@ -1,7 +1,7 @@
 import { Image, Platform } from 'react-native';
 import { CarPlay } from '../CarPlay';
 import { ListItem } from '../interfaces/ListItem';
-import { BaseEvent, Template, TemplateConfig } from './Template';
+import { SearchButtonPressedEvent, Template, TemplateConfig  } from './Template';
 import { Action } from 'src/interfaces/Action';
 
 export interface SearchTemplateConfig extends TemplateConfig {
@@ -21,7 +21,7 @@ export interface SearchTemplateConfig extends TemplateConfig {
   /**
    * Fired when search button is pressed
    */
-  onSearchButtonPressed?(e: BaseEvent): void;
+  onSearchButtonPressed?(e: SearchButtonPressedEvent): void;
   /**
    * Fired when the back button is pressed
    */

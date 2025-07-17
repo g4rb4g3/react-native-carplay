@@ -8,6 +8,7 @@
     bool hasListeners;
     NSMutableArray<RNCarPlayNavigationAlertWrapper *> *navigationAlertWrappers;
     NSDate *lastShowTripsTime;
+    NSString *currentSearchText;
 }
 
 @synthesize searchResultBlock;
@@ -302,6 +303,7 @@ RCT_EXPORT_METHOD(createTemplate:(NSString *)templateId config:(NSDictionary*)co
     if ([type isEqualToString:@"search"]) {
         CPSearchTemplate *searchTemplate = [[CPSearchTemplate alloc] init];
         searchTemplate.delegate = self;
+        self->currentSearchText = nil;
         carPlayTemplate = searchTemplate;
     }
     else if ([type isEqualToString:@"grid"]) {
@@ -1776,10 +1778,11 @@ RCT_EXPORT_METHOD(getRootTemplate: (RCTResponseSenderBlock)callback) {
 }
 
 - (void)searchTemplateSearchButtonPressed:(CPSearchTemplate *)searchTemplate {
-    [self sendTemplateEventWithName:searchTemplate name:@"searchButtonPressed"];
+    [self sendTemplateEventWithName:searchTemplate name:@"searchButtonPressed" json:@{ @"searchText": self->currentSearchText ?: @"" }];
 }
 
 - (void)searchTemplate:(CPSearchTemplate *)searchTemplate updatedSearchText:(NSString *)searchText completionHandler:(void (^)(NSArray<CPListItem *> * _Nonnull))completionHandler {
+    self->currentSearchText = searchText;
     [self sendTemplateEventWithName:searchTemplate name:@"updatedSearchText" json:@{ @"searchText": searchText }];
     self.searchResultBlock = completionHandler;
 }
