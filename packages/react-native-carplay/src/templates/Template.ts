@@ -10,6 +10,10 @@ export interface BaseEvent {
   templateId: string;
 }
 
+export interface SearchButtonPressedEvent extends BaseEvent {
+  searchText: string;
+}
+
 export interface BarButtonEvent extends BaseEvent {
   id: string;
 }
