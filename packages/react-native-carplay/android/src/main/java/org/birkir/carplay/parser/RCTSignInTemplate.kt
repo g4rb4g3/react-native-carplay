@@ -126,14 +126,16 @@ class RCTSignInTemplate(
         props.getArray("actions")?.let {
           for (i in 0 until it.size()) {
             val action = it.getMap(i)
-            val id = action.getString("id")
-            val onClickListener = ParkedOnlyOnClickListener.create {
-              if (id == null) {
-                return@create
+            action?.let { actionMap ->
+              val id = actionMap.getString("id")
+              val onClickListener = ParkedOnlyOnClickListener.create {
+                if (id == null) {
+                  return@create
+                }
+                carScreenContext.eventEmitter.buttonPressed(id)
               }
-              carScreenContext.eventEmitter.buttonPressed(id)
+              addAction(Parser.parseAction(actionMap, context, onClickListener))
             }
-            addAction(Parser.parseAction(it.getMap(i), context, onClickListener))
           }
         }
       }.build()

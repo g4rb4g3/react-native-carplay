@@ -81,17 +81,19 @@ abstract class RCTTemplate(
           preferredContentSize = it.size()
         )) {
           val item = it.getMap(i)
-          val id = if (item.hasKey("id")) item.getString("id") else null
-          itemIds.add(i, id ?: "")
+          item?.let { itemMap ->
+            val id = if (itemMap.hasKey("id")) itemMap.getString("id") else null
+            itemIds.add(i, id ?: "")
 
-          if (item.hasKey("selected") && item.getBoolean("selected")) {
-            selectedIndex = i
-          }
+            if (itemMap.hasKey("selected") && itemMap.getBoolean("selected")) {
+              selectedIndex = i
+            }
 
-          if (type == ItemListType.Row || type == ItemListType.RouteList || type == ItemListType.PlaceListNavigation) {
-            addItem(parseRowItem(item, i))
-          } else if (type == ItemListType.Grid) {
-            addItem(parseGridItem(item, i, isMapWithContentTemplate))
+            if (type == ItemListType.Row || type == ItemListType.RouteList || type == ItemListType.PlaceListNavigation) {
+              addItem(parseRowItem(itemMap, i))
+            } else if (type == ItemListType.Grid) {
+              addItem(parseGridItem(itemMap, i, isMapWithContentTemplate))
+            }
           }
         }
       }
@@ -167,12 +169,14 @@ abstract class RCTTemplate(
 
       if (titleVariants != null) {
         if (titleVariants.size() > 0) {
-          setTitle(
-            Parser.parseCarText(
-              titleVariants.getString(0),
-              metadata
+          titleVariants.getString(0)?.let { titleText ->
+            setTitle(
+              Parser.parseCarText(
+                titleText,
+                metadata
+              )
             )
-          )
+          }
         }
         if (titleVariants.size() > 1) {
           setText(titleVariants.getString(1))
@@ -260,7 +264,9 @@ abstract class RCTTemplate(
           contentType = ConstraintManager.CONTENT_LIMIT_TYPE_PANE,
           it.size()
         )) {
-          addRow(parseRowItem(it.getMap(i), i))
+          it.getMap(i)?.let { itemMap ->
+            addRow(parseRowItem(itemMap, i))
+          }
         }
       }
     }.build()
