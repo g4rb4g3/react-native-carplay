@@ -61,17 +61,25 @@ object CarNavigationManager {
             tripConfig.getArray("steps")?.let { steps ->
                 for (i in 0 until(steps.size())) {
                     val stepConfig = steps.getMap(i)
-                    val step = Parser.parseStep(stepConfig, carContext)
-                    val stepTravelEstimate =  Parser.parseTravelEstimate(stepConfig.getMap("stepTravelEstimate")!!)
-                    addStep(step, stepTravelEstimate)
+                    stepConfig?.let { stepMap ->
+                        val step = Parser.parseStep(stepMap, carContext)
+                        stepMap.getMap("stepTravelEstimate")?.let { travelEstimate ->
+                            val stepTravelEstimate = Parser.parseTravelEstimate(travelEstimate)
+                            addStep(step, stepTravelEstimate)
+                        }
+                    }
                 }
             }
             tripConfig.getArray("destinations")?.let { destinations ->
                 for (i in 0 until(destinations.size())) {
                     val destinationConfig = destinations.getMap(i)
-                    val destination = Parser.parseDestination(destinationConfig, carContext)
-                    val destinationTravelEstimate = Parser.parseTravelEstimate(destinationConfig.getMap("destinationTravelEstimate")!!)
-                    addDestination(destination, destinationTravelEstimate)
+                    destinationConfig?.let { destMap ->
+                        val destination = Parser.parseDestination(destMap, carContext)
+                        destMap.getMap("destinationTravelEstimate")?.let { travelEstimate ->
+                            val destinationTravelEstimate = Parser.parseTravelEstimate(travelEstimate)
+                            addDestination(destination, destinationTravelEstimate)
+                        }
+                    }
                 }
             }
         }.build()

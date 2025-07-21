@@ -249,11 +249,13 @@ class Parser(
     private fun parseLanes(lanes: ReadableArray, builder: Step.Builder) {
       for (i in 0 until lanes.size()) {
         val map = lanes.getMap(i)
-        val laneBuilder = Lane.Builder()
-        val shape = map.getInt("shape")
-        val recommended = map.getBoolean("recommended")
-        val lane = laneBuilder.addDirection(LaneDirection.create(shape, recommended)).build()
-        builder.addLane(lane)
+        map?.let {
+          val laneBuilder = Lane.Builder()
+          val shape = it.getInt("shape")
+          val recommended = it.getBoolean("recommended")
+          val lane = laneBuilder.addDirection(LaneDirection.create(shape, recommended)).build()
+          builder.addLane(lane)
+        }
       }
     }
 
