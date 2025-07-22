@@ -408,7 +408,7 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
   fun requestPermissions(permissions: ReadableArray, message: String, primaryAction: ReadableMap, headerAction: ReadableMap, promise: Promise) {
     val list = mutableListOf<String>()
     for (i in 0 until permissions.size()) {
-      list.add(permissions.getString(i))
+      permissions.getString(i)?.let { list.add(it) }
     }
     handler.post {
       screenManager?.push(RCTPermissionRequestTemplate(carContext, list, message, primaryAction, headerAction, promise))

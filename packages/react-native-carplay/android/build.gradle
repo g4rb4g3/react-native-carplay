@@ -81,6 +81,7 @@ android {
     sourceCompatibility JavaVersion.VERSION_17
     targetCompatibility JavaVersion.VERSION_17
   }
+
 }
 
 repositories {
@@ -91,9 +92,9 @@ repositories {
 
 dependencies {
   compileOnly "com.facebook.react:react-android:0.76.9"
-  implementation 'com.google.android.gms:play-services-base:17.6.0'
-  implementation 'com.google.android.gms:play-services-auth:19.2.0'
-  implementation "androidx.car.app:app:1.7.0-rc01"
+  implementation 'com.google.android.gms:play-services-base:18.3.0'
+  implementation 'com.google.android.gms:play-services-auth:21.0.0'
+  implementation "androidx.car.app:app:1.7.0"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.25"
   implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1"
 }

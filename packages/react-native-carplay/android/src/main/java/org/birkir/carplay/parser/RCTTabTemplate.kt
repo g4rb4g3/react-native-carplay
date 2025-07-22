@@ -21,10 +21,12 @@ class RCTTabTemplate(
       setLoading(props.isLoading())
       props.getArray("templates")?.let {
         for (i in 0 until it.size()) {
-          addTab(parseTab(it.getMap(i)))
+          it.getMap(i)?.let { tabMap ->
+            addTab(parseTab(tabMap))
+          }
         }
         // Apply and select first tab
-        it.getMap(0).getString("id")?.let { it1 ->
+        it.getMap(0)?.getString("id")?.let { it1 ->
           setTabContents(parseTabContents(it1))
           setActiveTabContentId(it1)
         }
