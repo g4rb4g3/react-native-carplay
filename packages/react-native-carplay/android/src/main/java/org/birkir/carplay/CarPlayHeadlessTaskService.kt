@@ -20,8 +20,9 @@ class CarPlayHeadlessTaskService : HeadlessJsTaskService() {
         "CarPlayHeadlessJsTask", Arguments.createMap(), 0, true
     )
 
-    override fun onBind(intent: Intent?): IBinder {
-        super.startTask(getTaskConfig(intent))
+    override fun onBind(intent: Intent): IBinder? {
+        // Start the headless task when bound
+        intent.let { startTask(getTaskConfig(it)) }
         return mBinder
     }
 }
