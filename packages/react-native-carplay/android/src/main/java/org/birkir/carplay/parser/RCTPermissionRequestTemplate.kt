@@ -1,11 +1,19 @@
 package org.birkir.carplay.parser
 
+import android.content.pm.PackageManager
+import android.os.Handler
+import android.os.Looper
 import androidx.activity.OnBackPressedCallback
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
-import androidx.car.app.model.LongMessageTemplate
+import androidx.car.app.model.Header
+import androidx.car.app.model.MessageTemplate
 import androidx.car.app.model.ParkedOnlyOnClickListener
 import androidx.car.app.model.Template
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReadableMap
@@ -45,12 +53,59 @@ class RCTPermissionRequestTemplate(
         screenManager.pop()
       }
     })
+
+    var destroyed = false
+
+    val handler = Handler(Looper.getMainLooper())
+    val permissionChecker = object : Runnable {
+      // this runnable makes sure we catch granted permissions from other templates or react-native PermissionAndroid.requestMultiple
+      override fun run() {
+        val granted = permissions.all {
+          ContextCompat.checkSelfPermission(carContext, it) == PackageManager.PERMISSION_GRANTED
+        }
+        if (granted) {
+          promise.resolve(Arguments.createMap().apply {
+            putArray("denied", Arguments.createArray())
+            putArray("granted", Arguments.createArray().apply {
+              permissions.forEach {
+                pushString(it)
+              }
+            })
+          })
+          screenManager.pop()
+          return
+        }
+
+        if (destroyed) {
+          return
+        }
+
+        handler.postDelayed(this, 1000)
+      }
+    }
+
+    lifecycle.addObserver(object: LifecycleEventObserver{
+      override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
+        when (event) {
+          Lifecycle.Event.ON_CREATE -> {
+            handler.postDelayed(permissionChecker, 1000)
+          }
+          Lifecycle.Event.ON_DESTROY -> {
+            destroyed = true
+          }
+          else -> {}
+        }
+      }
+    })
   }
 
   override fun onGetTemplate(): Template {
-    return LongMessageTemplate.Builder(message)
-      .setTitle(appName)
-      .setHeaderAction(headerAction)
+    return MessageTemplate.Builder(message)
+      .setHeader(
+        Header.Builder().apply {
+          setTitle(appName)
+          setStartHeaderAction(headerAction)
+        }.build())
       .addAction(primaryAction)
       .build()
   }
