@@ -1432,8 +1432,6 @@ RCT_EXPORT_METHOD(getRootTemplate: (RCTResponseSenderBlock)callback) {
         NSMutableArray<CPLane *> *lanes = [NSMutableArray array];
         NSArray<NSDictionary *> *lanesJSON = [RCTConvert NSArray:json[@"lanes"]];
         for (NSDictionary *laneJSON in lanesJSON) {
-            // CPLaneStatus status = [RCTConvert NSInteger:laneJSON[@"status"]];
-            
             NSMutableArray<NSMeasurement<NSUnitAngle *> *> *angles = [NSMutableArray array];
             if ([laneJSON objectForKey:@"angles"]) {
                 NSArray<NSNumber *> *angleValues = [RCTConvert NSArray:laneJSON[@"angles"]];
