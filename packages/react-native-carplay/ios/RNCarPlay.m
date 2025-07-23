@@ -565,8 +565,24 @@ RCT_EXPORT_METHOD(updateManeuvers:(NSArray*)maneuvers) {
     CPNavigationSession* navigationSession = [[RNCPStore sharedManager] getNavigationSession];
     if (navigationSession) {
         NSMutableArray<CPManeuver*>* upcomingManeuvers = [NSMutableArray array];
-        for (NSDictionary *maneuver in maneuvers) {
-            [upcomingManeuvers addObject:[self parseManeuver:maneuver]];
+        if (@available(iOS 18.0, *)) {
+            NSMutableArray<CPLaneGuidance*>* upcomingLaneGuidances = [NSMutableArray array];
+            for (NSDictionary *maneuver in maneuvers) {
+                CPManeuver *parsedManeuver = [self parseManeuver:maneuver];
+                CPLaneGuidance *parsedLaneGuidance = [self parseLaneGuidance:maneuver];
+                if (parsedLaneGuidance != nil) {
+                    parsedManeuver.linkedLaneGuidance = parsedLaneGuidance;
+                    [upcomingLaneGuidances addObject:parsedLaneGuidance];
+                }
+                
+                [upcomingManeuvers addObject:parsedManeuver];
+            }
+            [navigationSession addLaneGuidances:upcomingLaneGuidances];
+            [navigationSession setCurrentLaneGuidance:upcomingLaneGuidances.lastObject];
+        } else {
+            for (NSDictionary *maneuver in maneuvers) {
+                [upcomingManeuvers addObject:[self parseManeuver:maneuver]];
+            }
         }
         
         if (@available(iOS 17.4, *)) {
@@ -1015,7 +1031,7 @@ RCT_EXPORT_METHOD(dismissNavigationAlert:(NSString*)templateId animated:(BOOL)an
                 resolve(@YES);
             } else {
                 resolve(@NO);
-            }   
+            }
         }];
     } else {
         reject(@"template_not_found", @"Template not found", nil);
@@ -1403,6 +1419,54 @@ RCT_EXPORT_METHOD(getRootTemplate: (RCTResponseSenderBlock)callback) {
 
     NSMeasurement *distance = [[NSMeasurement alloc] initWithDoubleValue:value unit:unit];
     return [[CPTravelEstimates alloc] initWithDistanceRemaining:distance timeRemaining:time];
+}
+
+- (CPLaneGuidance*)parseLaneGuidance:(NSDictionary*)json  API_AVAILABLE(ios(18.0)){
+    if ([json objectForKey:@"lanes"]) {
+        CPLaneGuidance* laneGuidance = [[CPLaneGuidance alloc] init];
+
+        if ([json objectForKey:@"instructionVariants"]) {
+            [laneGuidance setInstructionVariants:[RCTConvert NSStringArray:json[@"instructionVariants"]]];
+        }
+        
+        NSMutableArray<CPLane *> *lanes = [NSMutableArray array];
+        NSArray<NSDictionary *> *lanesJSON = [RCTConvert NSArray:json[@"lanes"]];
+        for (NSDictionary *laneJSON in lanesJSON) {
+            NSMutableArray<NSMeasurement<NSUnitAngle *> *> *angles = [NSMutableArray array];
+            if ([laneJSON objectForKey:@"angles"]) {
+                NSArray<NSNumber *> *angleValues = [RCTConvert NSArray:laneJSON[@"angles"]];
+                for (NSNumber *angle in angleValues) {
+                    [angles addObject:[[NSMeasurement alloc] initWithDoubleValue:angle.doubleValue unit:NSUnitAngle.degrees]];
+                }
+            }
+
+            NSMeasurement<NSUnitAngle *> *highlightedAngle = nil;
+            if ([laneJSON objectForKey:@"highlightedAngle"]) {
+                double highlightedAngleValue = [RCTConvert double:laneJSON[@"highlightedAngle"]];
+                highlightedAngle = [[NSMeasurement alloc] initWithDoubleValue:highlightedAngleValue unit:NSUnitAngle.degrees];
+            }
+
+            CPLane *lane = [[CPLane alloc] initWithAngles:angles highlightedAngle:highlightedAngle isPreferred:NO];
+
+            if ([laneJSON objectForKey:@"status"]) {
+                NSString *status = [RCTConvert NSString:laneJSON[@"status"]];
+                if ([status isEqualToString:@"preferred"]) {
+                    [lane setStatus:CPLaneStatusPreferred];
+                } else if ([status isEqualToString:@"good"]) {
+                    [lane setStatus:CPLaneStatusGood];
+                } else if ([status isEqualToString:@"notgood"]) {
+                    [lane setStatus:CPLaneStatusNotGood];
+                }
+            }
+            [lanes addObject:lane];
+        }
+        
+        [laneGuidance setLanes:lanes];
+        
+        return laneGuidance;
+    }
+    
+    return nil;
 }
 
 - (CPManeuver*)parseManeuver:(NSDictionary*)json {
