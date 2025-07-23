@@ -89,10 +89,16 @@ abstract class RCTTemplate(
               selectedIndex = i
             }
 
-            if (type == ItemListType.Row || type == ItemListType.RouteList || type == ItemListType.PlaceListNavigation) {
-              addItem(parseRowItem(itemMap, i))
-            } else if (type == ItemListType.Grid) {
-              addItem(parseGridItem(itemMap, i, isMapWithContentTemplate))
+            when (type) {
+              ItemListType.Row,
+              ItemListType.RouteList,
+              ItemListType.PlaceListNavigation -> {
+                addItem(parseRowItem(itemMap, i))
+              }
+
+              ItemListType.Grid -> {
+                addItem(parseGridItem(itemMap, i, isMapWithContentTemplate))
+              }
             }
           }
         }
