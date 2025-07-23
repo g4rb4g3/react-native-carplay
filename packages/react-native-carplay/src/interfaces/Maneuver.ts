@@ -56,6 +56,7 @@ export interface Maneuver {
   junctionElementAngles?: Array<number>;
   roadFollowingManeuverVariants?: Array<string>;
   highwayExitLabel?: string;
+  lanes?: Array<{ angles: Array<number>; highlightedAngle?: number, status?: 'preferred' | 'good' | 'notgood' }>;
 }
 
 export enum ManeuverType {
