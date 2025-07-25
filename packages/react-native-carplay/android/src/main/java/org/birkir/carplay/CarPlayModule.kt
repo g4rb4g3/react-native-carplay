@@ -1,7 +1,6 @@
 package org.birkir.carplay
 
 import android.content.Intent
-import android.graphics.Bitmap
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -36,6 +35,7 @@ import org.birkir.carplay.parser.RCTPermissionRequestTemplate
 import org.birkir.carplay.parser.TemplateParser
 import org.birkir.carplay.screens.CarScreen
 import org.birkir.carplay.screens.CarScreenContext
+import org.birkir.carplay.telemetry.CarPlayTelemetryObserver
 import org.birkir.carplay.utils.CarNavigationManager
 import org.birkir.carplay.utils.EventEmitter
 import org.birkir.carplay.utils.PlayService

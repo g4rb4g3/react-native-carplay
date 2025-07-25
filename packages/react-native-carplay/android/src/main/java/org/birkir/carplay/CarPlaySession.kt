@@ -26,6 +26,7 @@ import kotlinx.coroutines.launch
 import org.birkir.carplay.parser.RCTMapTemplate
 import org.birkir.carplay.screens.CarScreen
 import org.birkir.carplay.screens.CarScreenContext
+import org.birkir.carplay.telemetry.CarPlayTelemetryObserver
 import org.birkir.carplay.utils.EventEmitter
 import org.birkir.carplay.utils.ReactContextResolver
 import java.util.UUID

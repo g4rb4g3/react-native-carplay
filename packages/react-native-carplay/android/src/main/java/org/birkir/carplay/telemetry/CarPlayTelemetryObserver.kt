@@ -1,4 +1,4 @@
-package org.birkir.carplay
+package org.birkir.carplay.telemetry
 
 import android.os.Handler
 import android.os.Looper
@@ -14,6 +14,7 @@ import androidx.car.app.versioning.CarAppApiLevels
 import androidx.core.content.ContextCompat
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
+import org.birkir.carplay.BuildConfig
 import org.birkir.carplay.utils.EventEmitter
 
 object CarPlayTelemetryObserver {
@@ -21,8 +22,7 @@ object CarPlayTelemetryObserver {
   private var carContext: CarContext? = null
   private var eventEmitter: EventEmitter? = null
 
-  private val telemetry = Arguments.createMap()
-  private var isTelemetryDirty = false
+  private val telemetryHolder = CarPlayTelemetryHolder()
   private val handler = Handler(Looper.getMainLooper())
 
   private val mModelListener = OnCarDataAvailableListener<Model> {
@@ -58,113 +58,37 @@ object CarPlayTelemetryObserver {
   }
 
   private val mEnergyLevelListener = OnCarDataAvailableListener<EnergyLevel> { carEnergyLevel ->
-    synchronized(
-      telemetry
-    ) {
-      val timestamp = System.currentTimeMillis() / 1000.0
+    if (carEnergyLevel.batteryPercent.status == CarValue.STATUS_SUCCESS) {
+      telemetryHolder.updateBatteryLevel(carEnergyLevel.batteryPercent.value)
+    }
 
-      if (carEnergyLevel.batteryPercent.status == CarValue.STATUS_SUCCESS) {
-        carEnergyLevel.batteryPercent.value?.let {
-          telemetry.putMap("batteryLevel", Arguments.createMap().apply {
-            putDouble("value", it.toDouble())
-            putDouble("timestamp", timestamp)
-          })
-        } ?: run {
-          telemetry.putMap("batteryLevel", Arguments.createMap().apply {
-            putNull("value")
-            putDouble("timestamp", timestamp)
-          })
-        }
+    if (carEnergyLevel.fuelPercent.status == CarValue.STATUS_SUCCESS) {
+      telemetryHolder.updateFuelLevel(carEnergyLevel.fuelPercent.value)
+    }
 
-        isTelemetryDirty = true
-      }
-      if (carEnergyLevel.fuelPercent.status == CarValue.STATUS_SUCCESS) {
-        carEnergyLevel.fuelPercent.value?.let {
-          telemetry.putMap("fuelLevel", Arguments.createMap().apply {
-            putDouble("value", it.toDouble())
-            putDouble("timestamp", timestamp)
-          })
-        } ?: run {
-          telemetry.putMap("fuelLevel", Arguments.createMap().apply {
-            putNull("value")
-            putDouble("timestamp", timestamp)
-          })
-        }
-
-        isTelemetryDirty = true
-      }
-      if (carEnergyLevel.rangeRemainingMeters.status == CarValue.STATUS_SUCCESS) {
-        carEnergyLevel.rangeRemainingMeters.value?.let {
-          telemetry.putMap("range", Arguments.createMap().apply {
-            putDouble("value", it.div(1000.0))
-            putDouble("timestamp", timestamp)
-          })
-        } ?: run {
-          telemetry.putMap("range", Arguments.createMap().apply {
-            putNull("value")
-            putDouble("timestamp", timestamp)
-          })
-        }
-
-        isTelemetryDirty = true
-      }
+    if (carEnergyLevel.rangeRemainingMeters.status == CarValue.STATUS_SUCCESS) {
+      telemetryHolder.updateRange(carEnergyLevel.rangeRemainingMeters.value?.div(1000f)) //m->km
     }
   }
 
   private val mSpeedListener = OnCarDataAvailableListener<Speed> { carSpeed ->
-    synchronized(
-      telemetry
-    ) {
-      if (carSpeed.displaySpeedMetersPerSecond.status == CarValue.STATUS_SUCCESS) {
-        val timestamp = System.currentTimeMillis() / 1000.0
-        carSpeed.displaySpeedMetersPerSecond.value?.let {
-          // convert to km/h
-          telemetry.putMap("odometer", Arguments.createMap().apply {
-            putDouble("value", it.times(3.6))
-            putDouble("timestamp", timestamp)
-          })
-        } ?: run {
-          telemetry.putMap("speed", Arguments.createMap().apply {
-            putNull("value")
-            putDouble("timestamp", timestamp)
-          })
-        }
-
-        isTelemetryDirty = true
-      }
+    if (carSpeed.displaySpeedMetersPerSecond.status == CarValue.STATUS_SUCCESS) {
+      telemetryHolder.updateSpeed(carSpeed.displaySpeedMetersPerSecond.value?.times(3.6f)) //m/s->km/h
     }
   }
 
   private val mMileageListener = OnCarDataAvailableListener<Mileage> { carMileage ->
-    synchronized(
-      telemetry
-    ) {
-      if (carMileage.odometerMeters.status == CarValue.STATUS_SUCCESS) {
-        val timestamp = System.currentTimeMillis() / 1000.0
-        carMileage.odometerMeters.value?.let {
-          telemetry.putMap("odometer", Arguments.createMap().apply {
-            putDouble("value", it.div(1000.0))
-            putDouble("timestamp", timestamp)
-          })
-        } ?: run {
-          telemetry.putMap("odometer", Arguments.createMap().apply {
-            putNull("value")
-            putDouble("timestamp", timestamp)
-          })
-        }
-
-        isTelemetryDirty = true
-      }
+    if (carMileage.odometerMeters.status == CarValue.STATUS_SUCCESS) {
+      telemetryHolder.updateOdometer(carMileage.odometerMeters.value?.div(1000f)) //m->km
     }
   }
 
   private val emitter = object : Runnable {
     override fun run() {
-      if (isTelemetryDirty) {
-        synchronized(telemetry) {
-          eventEmitter?.telemetry(Arguments.createMap().apply { merge(telemetry) })
-          isTelemetryDirty = false
-        }
+      val tlm = telemetryHolder.toMap()
+
+      if (tlm != null) {
+        eventEmitter?.telemetry(tlm)
       }
 
       handler.postDelayed(this, BuildConfig.CARPLAY_TELEMETRY_INTERVAL_MS)
@@ -174,8 +98,8 @@ object CarPlayTelemetryObserver {
   fun startTelemetryObserver(
     carContext: CarContext, eventEmitter: EventEmitter, promise: Promise
   ) {
-    this.carContext = carContext
-    this.eventEmitter = eventEmitter
+    CarPlayTelemetryObserver.carContext = carContext
+    CarPlayTelemetryObserver.eventEmitter = eventEmitter
 
     if (carContext.carAppApiLevel < CarAppApiLevels.LEVEL_3) {
       promise.reject(UnsupportedOperationException("Telemetry not supported for this API level ${carContext.carAppApiLevel}"))
