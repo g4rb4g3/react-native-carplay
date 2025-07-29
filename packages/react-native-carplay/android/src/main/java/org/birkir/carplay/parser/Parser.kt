@@ -133,8 +133,9 @@ class Parser(
     }
 
     fun parseColor(colorName: String?): CarColor {
-      // @todo implement CarColor.createCustom(light: 0x00, dark: 0x00)
-      // maybe use react native tooling for this
+      if (colorName?.startsWith("#") == true) {
+        return CarColor.createCustom(Color.parseColor(colorName),Color.parseColor(colorName))
+      }
 
       return when (colorName) {
         "blue" -> CarColor.BLUE
