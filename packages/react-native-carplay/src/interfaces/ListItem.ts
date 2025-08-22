@@ -99,7 +99,7 @@ type Duration = {
   end: number;
 };
 
-export type RoutePreviewListItem =
+export type ListItemDistanceDuration =
   | ListItem &
       (
         | {

@@ -1,11 +1,14 @@
 import { ImageSourcePropType } from 'react-native';
 import { Action } from './Action';
-import { ListItem } from './ListItem';
+import { ListItem, ListItemDistanceDuration } from './ListItem';
 
 /**
  * Represents a list of rows used for displaying informational content and a set of Actions that users can perform based on such content.
  * @namespace Android
  */
+
+export type PaneItem = ListItemDistanceDuration | ListItem;
+
 export interface Pane {
   /**
    * Sets whether the Pane is in a loading state.
@@ -25,5 +28,5 @@ export interface Pane {
   /**
    * Rows to display in the list.
    */
-  items?: ListItem[];
+  items?: [PaneItem, PaneItem, PaneItem, PaneItem] | [PaneItem, PaneItem, PaneItem] | [PaneItem, PaneItem] | [PaneItem];
 }

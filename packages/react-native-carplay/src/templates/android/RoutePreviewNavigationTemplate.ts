@@ -1,7 +1,7 @@
 import { AndroidRenderTemplates } from '../../interfaces/AndroidRenderTemplates';
 import { AndroidAction } from '../../interfaces/Action';
 import { Header } from '../../interfaces/Header';
-import { RoutePreviewListItem } from '../../interfaces/ListItem';
+import { ListItemDistanceDuration } from '../../interfaces/ListItem';
 import {
   AndroidNavigationBaseTemplate,
   AndroidNavigationBaseTemplateConfig,
@@ -24,7 +24,7 @@ export interface RoutePreviewNavigationTemplateConfig extends AndroidNavigationB
    * To show a marker corresponding to a point of interest represented by a row, set the Place instance via setMetadata. The host will display the PlaceMarker in both the map and the list view as the row becomes visible.
    * @limit The number of items in the ItemList should be smaller or equal than the limit provided by CONTENT_LIMIT_TYPE_PLACE_LIST. The host will ignore any items over that limit. The list itself cannot be selectable as set via setOnSelectedListener. Each Row can add up to 2 lines of texts via addText and cannot contain a Toggle.
    */
-  items?: RoutePreviewListItem[];
+  items?: ListItemDistanceDuration[];
   /**
    * Fired when list item is selected.
    * Spinner shows by default.
