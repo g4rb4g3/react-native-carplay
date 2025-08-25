@@ -1,6 +1,6 @@
 import { AndroidRenderTemplates } from '../../interfaces/AndroidRenderTemplates';
 import { AndroidAction } from '../../interfaces/Action';
-import { CarColor } from '../../interfaces/CarColor';
+import { CarColor, CustomCarColor } from '../../interfaces/CarColor';
 import { NavigationInfo } from '../../interfaces/NavigationInfo';
 import {
   AndroidNavigationBaseTemplate,
@@ -28,7 +28,7 @@ export interface NavigationTemplateConfig
    * Sets the background color to use for the navigation information.
    * Depending on contrast requirements, capabilities of the vehicle screens, or other factors, the color may be ignored by the host or overridden by the vehicle system.
    */
-  backgroundColor?: CarColor;
+  backgroundColor?: CarColor | CustomCarColor;
   /**
    * Sets the TravelEstimate to the final destination.
    */
