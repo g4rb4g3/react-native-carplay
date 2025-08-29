@@ -20,37 +20,117 @@ Ensure your `Entitlements.plist` within the `iOS/` directory contains the correc
 
 You need to convert your project to using [Scenes](https://developer.apple.com/documentation/uikit/app_and_environment/scenes/), as this is the standard when managing multiple windows in iOS 13+. This is a requirement for CarPlay apps.
 
+### 0. Disclaimer
+This has been proven to work on Expo SDK 53 without CNG. Your results may vary depending on your environment, but you should get an idea of the required steps anyway. :)
+
 ### 1. Add your PhoneScene
 
-This is where your app will run on the phone.
+This is where your app will run on the phone. Make sure to provide the proper Swift header on the YOURAPP-Swift import!
 
-`PhoneSceneDelegate.h`
+`PhoneScene.h`
 
 ```objc
+//
+//  PhoneScene.h
+//  ABRP
+//
+//  Created by Manuel Auer on 17.10.24.
+//
+
+#import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+#import <React/RCTRootView.h>
+#import <React/RCTLinkingManager.h>
+#import "LaunchURLStorage.h"
+#import "YOURAPP-Swift.h"
 
 @interface PhoneSceneDelegate : UIResponder <UIWindowSceneDelegate>
 
 @property (strong, nonatomic) UIWindow *window;
 
 @end
+
 ```
 
-`PhoneSceneDelegate.m`
+`PhoneScene.m`
 
 ```objc
-#import "PhoneSceneDelegate.h"
+//
+//  PhoneScene.m
+//  ABRP
+//
+//  Created by Manuel Auer on 17.10.24.
+//
+
+#import "PhoneScene.h"
+#import "ExpoScreenOrientation-Swift.h"
 
 @implementation PhoneSceneDelegate
-- (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session options:(UISceneConnectionOptions *)connectionOptions {
-  AppDelegate *appDelegate = (AppDelegate *)UIApplication.sharedApplication.delegate;
-  UIWindowScene *windowScene = (UIWindowScene *)scene;
-  UIViewController *rootViewController = [[UIViewController alloc] init];
-  rootViewController.view = appDelegate.rootView;
-  UIWindow *window = [[UIWindow alloc] initWithWindowScene:windowScene];
-  window.rootViewController = rootViewController;
-  self.window = window;
-  [window makeKeyAndVisible];
+
+- (void)scene:(UIScene *)scene
+willConnectToSession:(UISceneSession *)session
+     options:(UISceneConnectionOptions *)connectionOptions {
+
+   if (![session.role isEqualToString:UIWindowSceneSessionRoleApplication]) {
+        return;
+    }
+
+    AppDelegate *appDelegate = (AppDelegate *)UIApplication.sharedApplication.delegate;
+    if (!appDelegate) {
+        return;
+    }
+
+    if (![scene isKindOfClass:[UIWindowScene class]]) {
+        return;
+    }
+
+    UIWindowScene *windowScene = (UIWindowScene *)scene;
+    self.window = [[UIWindow alloc] initWithWindowScene:windowScene];
+    self.window.rootViewController = appDelegate.window.rootViewController;
+    [[ScreenOrientationRegistry shared] updateCurrentScreenOrientation];
+  
+    [self.window makeKeyAndVisible];
+
+    UIOpenURLContext *urlContext = connectionOptions.URLContexts.allObjects.firstObject;
+    if (urlContext) {
+        // Linking API -> app isn’t running
+        [LaunchURLStorage.shared setLaunchURL:urlContext.URL];
+    }
+
+    for (NSUserActivity *userActivity in connectionOptions.userActivities) {
+        if (userActivity.webpageURL) {
+            // Universal Links -> app isn’t running
+            [LaunchURLStorage.shared setLaunchURL:userActivity.webpageURL];
+            break;
+        }
+    }
+}
+
+// Linking API -> after launch
+- (void)scene:(UIScene *)scene openURLContexts:(NSSet<UIOpenURLContext *> *)URLContexts {
+    UIOpenURLContext *urlContext = URLContexts.allObjects.firstObject;
+    if (!urlContext) {
+        return;
+    }
+
+    NSURL *url = urlContext.URL;
+    NSDictionary<UIApplicationOpenURLOptionsKey, id> *options = @{
+        UIApplicationOpenURLOptionsSourceApplicationKey: urlContext.options.sourceApplication ?: @"",
+        UIApplicationOpenURLOptionsAnnotationKey: urlContext.options.annotation ?: @""
+    };
+
+    [RCTLinkingManager application:UIApplication.sharedApplication openURL:url options:options];
+}
+
+// Universal Links -> after launch
+- (void)scene:(UIScene *)scene continueUserActivity:(NSUserActivity *)userActivity {
+    AppDelegate *appDelegate = (AppDelegate *)UIApplication.sharedApplication.delegate;
+    if (!appDelegate) {
+        return;
+    }
+  
+    [RCTLinkingManager application:UIApplication.sharedApplication continueUserActivity:userActivity restorationHandler:^(NSArray * _Nullable _) {}];
+    [appDelegate application:UIApplication.sharedApplication continueUserActivity:userActivity restorationHandler:^(NSArray * _Nullable _) {}];
 }
 
 @end
@@ -60,75 +140,301 @@ This is where your app will run on the phone.
 
 This is where your app will run on CarPlay.
 
-`CarSceneDelegate.h`
+`CarScene.h`
 
 ```objc
-#import <Foundation/Foundation.h>
+//
+//  CarScene.h
+//  ABRP
+//
+//  Created by Manuel Auer on 17.10.24.
+//
+
 #import <CarPlay/CarPlay.h>
+#import <Foundation/Foundation.h>
+#import "RNCarPlay.h"
 
 @interface CarSceneDelegate : UIResponder <CPTemplateApplicationSceneDelegate>
+
 @end
 ```
 
-`CarSceneDelegate.m`
+`CarScene.m`
 
 ```objc
-#import "CarSceneDelegate.h"
-#import "CarSceneDelegate.h"
-#import "RNCarPlay.h"
+//
+//  CarScene.m
+//  ABRP
+//
+//  Created by Manuel Auer on 17.10.24.
+//
+
+#import "CarScene.h"
 
 @implementation CarSceneDelegate
 
 - (void)templateApplicationScene:(CPTemplateApplicationScene *)templateApplicationScene
-      didConnectInterfaceController:(CPInterfaceController *)interfaceController {
-    // Dispatch connect to RNCarPlay
+     didConnectInterfaceController:(CPInterfaceController *)interfaceController {
     [RNCarPlay connectWithInterfaceController:interfaceController window:templateApplicationScene.carWindow];
 }
 
 - (void)templateApplicationScene:(CPTemplateApplicationScene *)templateApplicationScene
-      didDisconnectInterfaceController:(CPInterfaceController *)interfaceController {
-    // Dispatch disconnect to RNCarPlay
- in   [RNCarPlay disconnect];
+     didDisconnectInterfaceController:(CPInterfaceController *)interfaceController {
+    [RNCarPlay disconnect];
+}
+
+- (void)sceneDidEnterBackground:(UIScene *)scene {
+  [RNCarPlay stateChanged:false];
+}
+
+- (void)sceneWillEnterForeground:(UIScene *)scene {
+  [RNCarPlay stateChanged:true];
 }
 
 @end
 ```
 
-### 3. Add Scene Manifest to Info.plist
+### 3. Add your ClusterScene
+
+This is what will run on the cars cluster screen (speedometer)
+
+`ClusterScene.h`
+```objc
+//
+//  ClusterScene.h
+//  ABRP
+//
+//  Created by Manuel Auer on 07.11.24.
+//
+
+#import <CarPlay/CarPlay.h>
+#import "RNCarPlay.h"
+
+API_AVAILABLE(ios(15.4))
+@interface ClusterSceneDelegate : UIResponder <CPTemplateApplicationInstrumentClusterSceneDelegate>
+
+@property (nonatomic, strong) NSString *clusterId;
+
+- (instancetype)init;
+
+@end
+```
+
+`ClusterScene.m`
+```objc
+//
+//  ClusterScene.m
+//  ABRP
+//
+//  Created by Manuel Auer on 07.11.24.
+//
+
+#import "ClusterScene.h"
+
+@implementation ClusterSceneDelegate
+
+- (instancetype)init {
+  self = [super init];
+  if (self) {
+    self.clusterId = [[NSUUID UUID] UUIDString];
+  }
+  return self;
+}
+
+- (void)templateApplicationInstrumentClusterScene:
+            (CPTemplateApplicationInstrumentClusterScene *)
+                templateApplicationInstrumentClusterScene
+            didConnectInstrumentClusterController:
+                (CPInstrumentClusterController *)instrumentClusterController {
+  UIUserInterfaceStyle contentStyle = templateApplicationInstrumentClusterScene.contentStyle;
+  [RNCarPlay connectWithInstrumentClusterController:instrumentClusterController contentStyle:contentStyle clusterId:self.clusterId];
+}
+
+- (void)templateApplicationInstrumentClusterScene:(CPTemplateApplicationInstrumentClusterScene *)templateApplicationInstrumentClusterScene didDisconnectInstrumentClusterController:(CPInstrumentClusterController *)instrumentClusterController {
+  [RNCarPlay disconnectFromInstrumentClusterController:self.clusterId];
+}
+
+- (void)contentStyleDidChange:(UIUserInterfaceStyle)contentStyle {
+  [RNCarPlay clusterContentStyleDidChange:contentStyle clusterId:self.clusterId];
+}
+
+- (void)sceneDidEnterBackground:(UIScene *)scene {
+  [RNCarPlay clusterStateChanged:self.clusterId isVisible:false];
+}
+
+- (void)sceneWillEnterForeground:(UIScene *)scene {
+  [RNCarPlay clusterStateChanged:self.clusterId isVisible:true];
+}
+
+@end
+```
+
+### 4. Add your DashboardScene
+
+This is what will run on the CarPlay Dashboard next to other widgets like Calendar, Music...
+
+`DashboardScene.h`
+
+```objc
+//
+//  DashboardScene.h
+//  ABRP
+//
+//  Created by Manuel Auer on 17.10.24.
+//
+
+#import <CarPlay/CarPlay.h>
+#import <UIKit/UIKit.h>
+#import "RNCarPlay.h"
+
+@interface DashboardSceneDelegate : UIResponder <CPTemplateApplicationDashboardSceneDelegate>
+
+@end
+```
+
+`DashboardScene.m`
+
+```objc
+//
+//  DashboardScene.m
+//  ABRP
+//
+//  Created by Manuel Auer on 17.10.24.
+//
+
+#import "DashboardScene.h"
+
+@implementation DashboardSceneDelegate
+
+- (void)templateApplicationDashboardScene:(CPTemplateApplicationDashboardScene *)templateApplicationDashboardScene
+                didConnectDashboardController:(CPDashboardController *)dashboardController
+                                     toWindow:(UIWindow *)window {
+    [RNCarPlay connectWithDashboardController:dashboardController window:window];
+}
+
+- (void)templateApplicationDashboardScene:(CPTemplateApplicationDashboardScene *)templateApplicationDashboardScene
+            didDisconnectDashboardController:(CPDashboardController *)dashboardController
+                                   fromWindow:(UIWindow *)window {
+    [RNCarPlay disconnectFromDashbaordController];
+}
+
+- (void)sceneDidEnterBackground:(UIScene *)scene {
+  [RNCarPlay dashboardStateChanged:false];
+}
+
+- (void)sceneWillEnterForeground:(UIScene *)scene {
+  [RNCarPlay dashboardStateChanged:true];
+}
+
+@end
+```
+
+### 5. Add RCTLinkingManager patch
+this makes sure getInitialURL works as expected
+
+`RCTLinkingManager+Custom.mm`
+```objc
+//
+//  RCTLinkingManager+Custom.mm
+//  this overrides the original RCTLinkingManager getInitialURL to provide the url the app was started with from a scene delegate
+//  Created by Manuel Auer on 04.10.24.
+//
+
+#import <React/RCTLinkingManager.h>
+#import "LaunchURLStorage.h"
+#import <React/RCTBridge.h>
+#import <React/RCTUtils.h>
+
+@implementation RCTLinkingManager (Custom)
+
+RCT_EXPORT_METHOD(getInitialURL:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject)
+{
+    NSURL *initialURL = [LaunchURLStorage shared].launchURL;
+
+    if (initialURL) {
+        resolve(RCTNullIfNil(initialURL.absoluteString));
+        return;
+    }
+  
+    // Fallback to the original implementation
+    if (self.bridge.launchOptions[UIApplicationLaunchOptionsURLKey]) {
+        initialURL = self.bridge.launchOptions[UIApplicationLaunchOptionsURLKey];
+    } else {
+        NSDictionary *userActivityDictionary =
+            self.bridge.launchOptions[UIApplicationLaunchOptionsUserActivityDictionaryKey];
+        if ([userActivityDictionary[UIApplicationLaunchOptionsUserActivityTypeKey] isEqual:NSUserActivityTypeBrowsingWeb]) {
+            initialURL = ((NSUserActivity *)userActivityDictionary[@"UIApplicationLaunchOptionsUserActivityKey"]).webpageURL;
+        }
+    }
+    
+    resolve(RCTNullIfNil(initialURL.absoluteString));
+}
+
+@end
+```
+
+### 6. Add Scene Manifest to Info.plist
+adjust to your needs, this is the fully featured CarPlay, Dashboard & Cluster screen setup.
 
 `ios/App/Info.plist`
 
 ```xml
-<key>UIApplicationSceneManifest</key>
-<dict>
-  <key>UIApplicationSupportsMultipleScenes</key>
-  <true/>
-  <key>UISceneConfigurations</key>
-  <dict>
-    <key>CPTemplateApplicationSceneSessionRoleApplication</key>
-    <array>
+    <key>UIApplicationSceneManifest</key>
+    <dict>
+      <key>CPSupportsDashboardNavigationScene</key>
+      <true/>
+      <key>CPSupportsInstrumentClusterNavigationScene</key>
+      <true/>
+      <key>UIApplicationSupportsMultipleScenes</key>
+      <true/>
+      <key>UISceneConfigurations</key>
       <dict>
-        <key>UISceneClassName</key>
-        <string>CPTemplateApplicationScene</string>
-        <key>UISceneConfigurationName</key>
-        <string>CarPlay</string>
-        <key>UISceneDelegateClassName</key>
-        <string>$(PRODUCT_MODULE_NAME).CarSceneDelegate</string>
+        <key>CPTemplateApplicationDashboardSceneSessionRoleApplication</key>
+        <array>
+          <dict>
+            <key>UISceneClassName</key>
+            <string>CPTemplateApplicationDashboardScene</string>
+            <key>UISceneConfigurationName</key>
+            <string>Dashboard</string>
+            <key>UISceneDelegateClassName</key>
+            <string>DashboardSceneDelegate</string>
+          </dict>
+        </array>
+        <key>CPTemplateApplicationInstrumentClusterSceneSessionRoleApplication</key>
+        <array>
+          <dict>
+            <key>UISceneClassName</key>
+            <string>CPTemplateApplicationInstrumentClusterScene</string>
+            <key>UISceneConfigurationName</key>
+            <string>Cluster</string>
+            <key>UISceneDelegateClassName</key>
+            <string>ClusterSceneDelegate</string>
+          </dict>
+        </array>
+        <key>CPTemplateApplicationSceneSessionRoleApplication</key>
+        <array>
+          <dict>
+            <key>UISceneClassName</key>
+            <string>CPTemplateApplicationScene</string>
+            <key>UISceneConfigurationName</key>
+            <string>CarPlay</string>
+            <key>UISceneDelegateClassName</key>
+            <string>CarSceneDelegate</string>
+          </dict>
+        </array>
+        <key>UIWindowSceneSessionRoleApplication</key>
+        <array>
+          <dict>
+            <key>UISceneClassName</key>
+            <string>UIWindowScene</string>
+            <key>UISceneConfigurationName</key>
+            <string>Phone</string>
+            <key>UISceneDelegateClassName</key>
+            <string>PhoneSceneDelegate</string>
+          </dict>
+        </array>
       </dict>
-    </array>
-    <key>UIWindowSceneSessionRoleApplication</key>
-    <array>
-      <dict>
-        <key>UISceneClassName</key>
-        <string>UIWindowScene</string>
-        <key>UISceneConfigurationName</key>
-        <string>Phone</string>
-        <key>UISceneDelegateClassName</key>
-        <string>$(PRODUCT_MODULE_NAME).PhoneSceneDelegate</string>
-      </dict>
-    </array>
-  </dict>
-</dict>
+    </dict>
 ```
 
 ## Entitlement matrix
