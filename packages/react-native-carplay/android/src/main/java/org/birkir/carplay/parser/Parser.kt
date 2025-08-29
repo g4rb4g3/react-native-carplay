@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.Resources.NotFoundException
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.text.Spannable
