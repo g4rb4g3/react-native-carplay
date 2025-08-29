@@ -373,7 +373,57 @@ RCT_EXPORT_METHOD(getInitialURL:(RCTPromiseResolveBlock)resolve reject:(RCTPromi
 @end
 ```
 
-### 6. Add Scene Manifest to Info.plist
+### 6. Add LaunchURLStorage
+required for the above RCTLinkingManager patch
+
+`LaunchURLStorage.h`
+
+```objc
+//
+//  LaunchURLStorage.h
+//  ABRP
+//
+//  Created by Manuel Auer on 04.10.24.
+//
+#import <Foundation/Foundation.h>
+
+@interface LaunchURLStorage : NSObject
+
+@property (nonatomic, strong) NSURL *launchURL;
+
++ (instancetype)shared;
+
+@end
+```
+
+
+`LaunchURLStorage.m`
+
+```objc
+//
+//  LaunchURLStorage.m
+//  ABRP
+//
+//  Created by Manuel Auer on 04.10.24.
+//
+
+#import "LaunchURLStorage.h"
+
+@implementation LaunchURLStorage
+
++ (instancetype)shared {
+    static LaunchURLStorage *sharedInstance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sharedInstance = [[self alloc] init];
+    });
+    return sharedInstance;
+}
+
+@end
+```
+
+### 7. Add Scene Manifest to Info.plist
 adjust to your needs, this is the fully featured CarPlay, Dashboard & Cluster screen setup.
 
 `ios/App/Info.plist`
