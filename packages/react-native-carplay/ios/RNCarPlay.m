@@ -1511,27 +1511,30 @@ RCT_EXPORT_METHOD(getRootTemplate: (RCTResponseSenderBlock)callback) {
         NSMutableArray<NSAttributedString *> *attributedInstructions = [NSMutableArray array];
         
         // Process each item in the array from JSON
-        NSArray *variants = [json objectForKey:@"attributedInstructionVariants"];
-        for (NSDictionary *variant in variants) {
-            NSString *text = [variant objectForKey:@"text"] ?: @"";
-            NSInteger imagePosition = NSNotFound;
-            if ([variant objectForKey:@"imagePosition"]) {
-                imagePosition = [variant[@"imagePosition"] integerValue];
-            }
-            
+        NSArray *attributedInstructionVariants = [json objectForKey:@"attributedInstructionVariants"];
+        for (NSDictionary *attributedInstructionVariant in attributedInstructionVariants) {
+            NSString *text = [attributedInstructionVariant objectForKey:@"text"] ?: @"";
             NSMutableAttributedString *instruction = [[NSMutableAttributedString alloc] initWithString:text];
 
-            // If there's an image to attach
-            if ([variant objectForKey:@"image"]) {
-                UIImage *image = [RCTConvert UIImage:variant[@"image"]];
-                if (image) {
-                    NSTextAttachment *attachment = [NSTextAttachment textAttachmentWithImage:image];
-                    NSAttributedString *container = [NSAttributedString attributedStringWithAttachment:attachment];
-
-                    if (imagePosition != NSNotFound) {
-                        [instruction insertAttributedString:container atIndex:imagePosition];
-                    } else {
-                        [instruction appendAttributedString:container];
+            NSArray *images = [attributedInstructionVariant objectForKey:@"images"];
+            for (NSDictionary *image in images) {
+                // If there's an image to attach
+                if ([image objectForKey:@"image"]) {
+                    UIImage *uiImage = [RCTConvert UIImage:image[@"image"]];
+                    if (uiImage) {
+                        NSInteger imagePosition = NSNotFound;
+                        if ([image objectForKey:@"imagePosition"]) {
+                            imagePosition = [image[@"imagePosition"] integerValue];
+                        }
+                        
+                        NSTextAttachment *attachment = [NSTextAttachment textAttachmentWithImage:uiImage];
+                        NSAttributedString *container = [NSAttributedString attributedStringWithAttachment:attachment];
+                        
+                        if (imagePosition != NSNotFound) {
+                            [instruction insertAttributedString:container atIndex:imagePosition];
+                        } else {
+                            [instruction appendAttributedString:container];
+                        }
                     }
                 }
             }
