@@ -6,7 +6,7 @@
 @implementation RNCarPlay
 {
     bool hasListeners;
-    NSMutableArray<RNCarPlayNavigationAlertWrapper *> *navigationAlertWrappers;
+    NSMutableDictionary<NSNumber *, CPNavigationAlert *> *navigationAlertWrappers;
     NSDate *lastShowTripsTime;
     NSString *currentSearchText;
 }
@@ -18,7 +18,7 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        navigationAlertWrappers = [[NSMutableArray alloc] init];
+        navigationAlertWrappers = [[NSMutableDictionary alloc] init];
     }
     return self;
 }
@@ -1018,6 +1018,16 @@ RCT_EXPORT_METHOD(presentNavigationAlert:(NSString*)templateId json:(NSDictionar
     CPTemplate *template = [[RNCPStore sharedManager] findTemplateById:templateId];
     if (template) {
         CPMapTemplate *mapTemplate = (CPMapTemplate*) template;
+        NSNumber *navigationAlertId = [json objectForKey:@"navigationAlertId"];
+        CPNavigationAlert *navigationAlert = navigationAlertWrappers[navigationAlertId];
+        if (navigationAlert) {
+            NSArray<NSString *> * titleVariants = [RCTConvert NSStringArray:json[@"titleVariants"]];
+            NSArray<NSString *> * subtitleVariants = [RCTConvert NSStringArray:json[@"subtitleVariants"]];
+            
+            [navigationAlert updateTitleVariants:titleVariants subtitleVariants:subtitleVariants];
+            return;
+        }
+        
         [mapTemplate presentNavigationAlert:[self parseNavigationAlert:json templateId:templateId] animated:animated];
     }
 }
@@ -1622,8 +1632,8 @@ RCT_EXPORT_METHOD(getRootTemplate: (RCTResponseSenderBlock)callback) {
 
     CPNavigationAlert* alert = [[CPNavigationAlert alloc] initWithTitleVariants:[RCTConvert NSStringArray:json[@"titleVariants"]] subtitleVariants:[RCTConvert NSStringArray:json[@"subtitleVariants"]] imageSet:imageSet primaryAction:[self parseAlertAction:json[@"primaryAction"] body:@{ @"templateId": templateId, @"primary": @(YES), @"navigationAlertId": navigationAlertId }] secondaryAction:secondaryAction duration:[RCTConvert double:json[@"duration"]]];
     
-    RNCarPlayNavigationAlertWrapper *wrapper = [[RNCarPlayNavigationAlertWrapper alloc] initWithAlert:alert userInfo:@{ @"navigationAlertId": navigationAlertId }];
-    [navigationAlertWrappers addObject:wrapper];
+    
+    navigationAlertWrappers[navigationAlertId] = alert;
 
     return alert;
 }
@@ -1660,6 +1670,7 @@ RCT_EXPORT_METHOD(getRootTemplate: (RCTResponseSenderBlock)callback) {
 
 - (NSDictionary*)navigationAlertToJson:(CPNavigationAlert*)navigationAlert dismissalContext:(CPNavigationAlertDismissalContext)dismissalContext {
     NSString *dismissalCtx = @"none";
+    
     switch (dismissalContext) {
         case CPNavigationAlertDismissalContextTimeout:
             dismissalCtx = @"timeout";
@@ -1672,33 +1683,20 @@ RCT_EXPORT_METHOD(getRootTemplate: (RCTResponseSenderBlock)callback) {
             break;
     }
     
-    NSMutableDictionary* userInfo = nil;
-    for (RNCarPlayNavigationAlertWrapper *wrapper in navigationAlertWrappers) {
-        if (wrapper.navigationAlert == navigationAlert) {
-            userInfo = [wrapper.userInfo mutableCopy];
-            break;
-        }
-    }
-    
-    if (userInfo == nil) {
-        return @{
-            @"todo": @(YES),
-            @"reason": dismissalCtx
-        };
-    }
+    NSMutableDictionary* userInfo = [[self navigationAlertToJson:navigationAlert] mutableCopy];
 
     userInfo[@"reason"] = dismissalCtx;
     
     return userInfo;
 }
 - (NSDictionary*)navigationAlertToJson:(CPNavigationAlert*)navigationAlert {
-    NSDictionary* userInfo = nil;
-    for (RNCarPlayNavigationAlertWrapper *wrapper in navigationAlertWrappers) {
-        if (wrapper.navigationAlert == navigationAlert) {
-            userInfo = wrapper.userInfo;
-            break;
+    __block NSDictionary* userInfo = nil;
+    [navigationAlertWrappers enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull navigationAlertId, CPNavigationAlert * _Nonnull alert, BOOL * _Nonnull stop) {
+        if (alert == navigationAlert) {
+            userInfo = @{ @"navigationAlertId": navigationAlertId };
+            *stop = YES;
         }
-    }
+    }];
     
     if (userInfo == nil) {
         return @{ @"todo": @(YES) };
@@ -1784,9 +1782,11 @@ RCT_EXPORT_METHOD(getRootTemplate: (RCTResponseSenderBlock)callback) {
 }
 - (void)mapTemplate:(CPMapTemplate *)mapTemplate didDismissNavigationAlert:(CPNavigationAlert *)navigationAlert dismissalContext:(CPNavigationAlertDismissalContext)dismissalContext {
     [self sendTemplateEventWithName:mapTemplate name:@"didDismissNavigationAlert" json:[self navigationAlertToJson:navigationAlert dismissalContext:dismissalContext]];
-    for (RNCarPlayNavigationAlertWrapper *wrapper in navigationAlertWrappers) {
-        if (wrapper.navigationAlert == navigationAlert) {
-            [navigationAlertWrappers removeObject:wrapper];
+    
+    for (NSNumber *navigationAlertId in [navigationAlertWrappers allKeys]) {
+        CPNavigationAlert *alert = navigationAlertWrappers[navigationAlertId];
+        if (alert == navigationAlert) {
+            [navigationAlertWrappers removeObjectForKey:navigationAlertId];
             break;
         }
     }
