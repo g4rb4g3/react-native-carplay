@@ -291,8 +291,13 @@ abstract class RCTTemplate(
   }
 
   protected fun parseMessageInfo(map: ReadableMap): MessageInfo {
-    val builder = MessageInfo.Builder(map.getString("title")!!)
-    map.getMap("image")?.let { builder.setImage(Parser.parseCarIcon(it, context)) }
+    val builder = MessageInfo.Builder(map.getString("title") ?: "missing title")
+    map.getString("text")?.let {
+      builder.setText(it)
+    }
+    map.getMap("image")?.let {
+      builder.setImage(Parser.parseCarIcon(it, context))
+    }
     return builder.build()
   }
 

@@ -17,6 +17,7 @@ export type NavigationRoutingInfo =
 export type NavigationMessageInfo = {
   type: 'messageInfo';
   title: string;
+  text?: string;
   image?: ImageSourcePropType;
 };
 
