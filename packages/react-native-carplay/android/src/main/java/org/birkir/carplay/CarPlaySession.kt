@@ -118,16 +118,17 @@ class CarPlaySession(
         })
       }
 
+      if (!isCluster) {
+        val carModule = reactContext.getNativeModule(CarPlayModule::class.java)
+        carModule!!.setCarContext(carContext, screen, lifecycle)
+      }
+
       catalystInstance.getJSModule(AppRegistry::class.java)
         ?.runApplication(jsAppModuleName, appParams)
 
-      if (isCluster) {
-        // cluster displays hold only a single navigation template that is linked to the main navigation template for updates
-        return
+      if (!isCluster) {
+        EventEmitter(reactContext).didConnect()
       }
-
-      val carModule = reactContext.getNativeModule(CarPlayModule::class.java)
-      carModule!!.setCarContext(carContext, screen, lifecycle)
 
     } catch (e: Exception) {
       e.printStackTrace()

@@ -95,7 +95,6 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
 
       }
     })
-    eventEmitter.didConnect()
   }
 
   private fun parseTemplate(
