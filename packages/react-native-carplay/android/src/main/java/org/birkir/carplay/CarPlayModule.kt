@@ -382,6 +382,7 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
   fun navigationEnded(promise: Promise) {
     if (!CarNavigationManager.isInitialized()) {
       promise.reject(UnsupportedOperationException("CarNavigationManager not initialized, make sure to set a navigation root template first!"))
+      return
     }
     handler.post {
       CarNavigationManager.navigationEnded()
