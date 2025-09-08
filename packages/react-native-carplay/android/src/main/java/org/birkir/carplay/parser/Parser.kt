@@ -12,6 +12,7 @@ import android.text.SpannableString
 import android.util.Log
 import androidx.car.app.CarContext
 import androidx.car.app.model.Action
+import androidx.car.app.model.Action.FLAG_DEFAULT
 import androidx.car.app.model.Action.FLAG_IS_PERSISTENT
 import androidx.car.app.model.Action.FLAG_PRIMARY
 import androidx.car.app.model.CarColor
@@ -213,6 +214,9 @@ class Parser(
           }
           if (it == "persistent") {
             builder.setFlags(FLAG_IS_PERSISTENT)
+          }
+          if (it == "default") {
+            builder.setFlags(FLAG_DEFAULT)
           }
         }
         try {
