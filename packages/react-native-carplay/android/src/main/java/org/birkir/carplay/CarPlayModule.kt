@@ -159,7 +159,11 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
         val screen = getScreen(templateId)
         if (screen != null) {
           it.popToRoot()
-          val root = it.top
+          val root = try {
+            it.top
+          } catch (_: NullPointerException) {
+            null
+          }
           it.push(screen)
 
           if (screen.template is NavigationTemplate) {
@@ -179,10 +183,12 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
             }
           })
 
-          if (root is CarScreen) {
-            removeScreen(root)
+          if (root != null) {
+            if (root is CarScreen) {
+              removeScreen(root)
+            }
+            it.remove(root)
           }
-          it.remove(root)
         }
       }
     }
