@@ -1,5 +1,6 @@
 package org.birkir.carplay
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
@@ -8,6 +9,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
 import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.IBinder
 import android.util.Log
@@ -37,6 +39,8 @@ class CarPlayService : CarAppService(), LifecycleEventListener {
   private lateinit var emitter: EventEmitter
   private lateinit var notificationManager: NotificationManager
   private var mServiceBound = false
+  private var isSessionStarted = false
+  private var isReactAppStarted = false
 
   private val connection: ServiceConnection = object : ServiceConnection {
     override fun onServiceConnected(
@@ -51,16 +55,34 @@ class CarPlayService : CarAppService(), LifecycleEventListener {
   }
 
   private val isNavigatingObserver = Observer<Boolean> {
-    Log.d(TAG, "isNavigating $it")
     if (!it) {
       stopForeground(STOP_FOREGROUND_REMOVE)
       return@Observer
     }
 
-    startForeground(
-      NOTIFICATION_ID,
-      createNotification(null, null, null)
-    )
+    if (!isSessionStarted && !isReactAppStarted) {
+      Log.w(TAG, "CarSession and ReactApp not running, unable to start foreground service!");
+      return@Observer
+    }
+
+    val isLocationPermissionGranted =
+      checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED || checkSelfPermission(
+        Manifest.permission.ACCESS_FINE_LOCATION
+      ) == PackageManager.PERMISSION_GRANTED
+
+    if (!isLocationPermissionGranted) {
+      Log.w(TAG, "location permission not granted, unable to start foreground service!")
+      return@Observer
+    }
+
+    try {
+      startForeground(
+        NOTIFICATION_ID,
+        createNotification(null, null, null)
+      )
+    } catch (e: SecurityException) {
+      Log.e(TAG, "failed to start foreground service", e)
+    }
   }
 
   private val notificationObserver = Observer<CarNotification?> {
@@ -138,6 +160,18 @@ class CarPlayService : CarAppService(), LifecycleEventListener {
 
         this@CarPlayService.stopForeground(STOP_FOREGROUND_REMOVE)
       }
+
+      override fun onResume(owner: LifecycleOwner) {
+        super.onResume(owner)
+
+        isSessionStarted = true
+      }
+
+      override fun onPause(owner: LifecycleOwner) {
+        super.onPause(owner)
+
+        isSessionStarted = false
+      }
     })
 
     return session
@@ -188,8 +222,10 @@ class CarPlayService : CarAppService(), LifecycleEventListener {
   }
 
   override fun onHostPause() {
+    isReactAppStarted = false
   }
 
   override fun onHostResume() {
+    isReactAppStarted = true
   }
 }
