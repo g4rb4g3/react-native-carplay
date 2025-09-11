@@ -117,6 +117,7 @@ object CarPlayTelemetryObserver {
     try {
       carInfo.fetchModel(carHardwareExecutor, mModelListener)
     } catch (_: SecurityException) {
+    } catch (_: NullPointerException) {
     }
 
     if (isRunning) {
@@ -128,16 +129,19 @@ object CarPlayTelemetryObserver {
     try {
       carInfo.addEnergyLevelListener(carHardwareExecutor, mEnergyLevelListener)
     } catch (_: SecurityException) {
+    } catch (_: NullPointerException) {
     }
 
     try {
       carInfo.addSpeedListener(carHardwareExecutor, mSpeedListener)
     } catch (_: SecurityException) {
+    } catch (_: NullPointerException) {
     }
 
     try {
       carInfo.addMileageListener(carHardwareExecutor, mMileageListener)
     } catch (_: SecurityException) {
+    } catch (_: NullPointerException) {
     }
 
     handler.post(emitter)
