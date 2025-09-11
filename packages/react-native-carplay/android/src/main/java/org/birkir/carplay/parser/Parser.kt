@@ -1,12 +1,8 @@
 package org.birkir.carplay.parser
 
 import android.content.Context
-import android.content.res.Resources.NotFoundException
 import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.drawable.BitmapDrawable
-import android.net.Uri
 import android.text.Spannable
 import android.text.SpannableString
 import android.util.Log
@@ -32,17 +28,10 @@ import androidx.car.app.navigation.model.LaneDirection
 import androidx.car.app.navigation.model.Maneuver
 import androidx.car.app.navigation.model.Step
 import androidx.car.app.navigation.model.TravelEstimate
-import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.IconCompat
-import com.facebook.common.references.CloseableReference
-import com.facebook.datasource.DataSources
-import com.facebook.drawee.backends.pipeline.Fresco
-import com.facebook.imagepipeline.image.CloseableBitmap
-import com.facebook.imagepipeline.request.ImageRequestBuilder
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.ReadableType
-import com.facebook.react.views.imagehelper.ImageSource
 import org.birkir.carplay.screens.CarScreenContext
 import org.birkir.carplay.utils.EventEmitter
 import java.util.TimeZone
@@ -68,35 +57,11 @@ class Parser(
     }
 
     fun parseBitmap(map: ReadableMap, context: Context): Bitmap {
-      val uri = map.getString("uri")
-      if (uri?.startsWith("res://") == true) {
-        val name = Uri.parse(uri).path?.substring(1)
-        val id = context.resources.getIdentifier(name, "drawable", context.packageName)
-
-        val drawable = ContextCompat.getDrawable(context, id)
-          ?: throw NotFoundException("drawable name: $name, id: $id not found")
-
-        if (drawable is BitmapDrawable) {
-          return drawable.bitmap
-        }
-
-        val bitmap = Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        drawable.setBounds(0, 0, canvas.width, canvas.height)
-        drawable.draw(canvas)
-
-        return bitmap
+      map.getString("uri")?.let {
+        return BitmapCache.get(it, context)
       }
-      val source = ImageSource(context, uri)
-      val imageRequest = ImageRequestBuilder.newBuilderWithSource(source.uri).build()
-      val dataSource = Fresco.getImagePipeline().fetchDecodedImage(imageRequest, context)
-      val result = DataSources.waitForFinalResult(dataSource) as CloseableReference<CloseableBitmap>
-      val bitmap = result.get().underlyingBitmap
 
-      CloseableReference.closeSafely(result)
-      dataSource.close()
-
-      return bitmap
+      throw IllegalArgumentException("can not parseBitmap, uri missing in map")
     }
 
     fun parseCarIcon(map: ReadableMap, context: CarContext): CarIcon {
