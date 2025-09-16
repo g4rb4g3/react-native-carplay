@@ -452,7 +452,7 @@ export class CarPlayInterface {
    * @namespace Android
    */
   public alert(alert: AndroidAutoAlertConfig) {
-    this.alertCallbacks = { id: () => null };
+    this.alertCallbacks = { [alert.id]: () => null };
     const { actions, ...config } = alert;
 
     let duration = alert.duration;
