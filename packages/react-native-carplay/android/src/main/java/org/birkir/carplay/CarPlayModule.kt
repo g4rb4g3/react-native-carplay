@@ -258,10 +258,19 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
               AlertCallback.REASON_NOT_SUPPORTED -> "notSupported"
               else -> "unknown"
             }
-            eventEmitter.didDismissNavigationAlert(id, "cancel", reasonString)
+            // by posting this later we make sure the button press is fired before the dismissal
+            handler.postDelayed({
+              eventEmitter.didDismissNavigationAlert(
+                id,
+                "cancel",
+                reasonString
+              )
+            }, 500)
           }
+
           override fun onDismiss() {
-            eventEmitter.didDismissNavigationAlert(id, "dismiss" )
+            // by posting this later we make sure the button press is fired before the dismissal
+            handler.postDelayed({ eventEmitter.didDismissNavigationAlert(id, "dismiss") }, 500)
           }
         })
         props.getString("subtitle")?.let { setSubtitle(Parser.parseCarText(it, props)) }

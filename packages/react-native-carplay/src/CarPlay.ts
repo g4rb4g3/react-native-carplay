@@ -44,6 +44,7 @@ import {
 import { SignInTemplate } from './templates/android/SignInTemplate';
 import { Action } from './interfaces/Action';
 import { HeaderAction } from './interfaces/Action';
+import { NavigationAlertHideEvent } from './templates/Template';
 
 const { RNCarPlay } = NativeModules as { RNCarPlay: InternalCarPlay };
 
@@ -117,6 +118,8 @@ export type AndroidAutoAlertConfig = {
 type VoiceCommandEvent = { action: 'NAVIGATE'; query: string };
 export type OnVoiceCommandCallback = (voiceCommand: VoiceCommandEvent) => void;
 
+type AlertCallbackId = string;
+
 /**
  * A controller that manages all user interface elements appearing on your map displayed on the CarPlay screen.
  */
@@ -143,7 +146,8 @@ export class CarPlayInterface {
   private onClusterConnectCallbacks = new Set<OnClusterControllerConnectCallback>();
   private onAppearanceDidChangeCallbacks = new Set<OnAppearanceDidChangeCallback>();
   private onOnSafeAreaInsetsDidChangeCallbacks = new Set<OnSafeAreaInsetsDidChangeCallback>();
-  private alertCallbacks: { [key: string]: () => void } = {};
+  private alertCallbacks: { [key: AlertCallbackId]: { alertId: number; callback: () => void } } =
+    {};
   private onVoiceCommandCallbacks = new Set<OnVoiceCommandCallback>();
 
   constructor() {
@@ -192,6 +196,13 @@ export class CarPlayInterface {
       this.emitter.addListener('voiceCommand', (voiceCommand: VoiceCommandEvent) => {
         this.onVoiceCommandCallbacks.forEach(callback => callback(voiceCommand));
       });
+
+      this.emitter.addListener(
+        'didDismissNavigationAlert',
+        ({ navigationAlertId }: NavigationAlertHideEvent) => {
+          this.cleanAlertCallbacks(navigationAlertId);
+        },
+      );
     }
 
     this.emitter.addListener(
@@ -201,10 +212,8 @@ export class CarPlayInterface {
           // we listen to alert actions only in here, these do not have a templateId
           return;
         }
-        const callback = this.alertCallbacks[buttonId];
+        const { callback } = this.alertCallbacks[buttonId];
         callback?.();
-
-        this.alertCallbacks = {};
       },
     );
 
@@ -452,7 +461,6 @@ export class CarPlayInterface {
    * @namespace Android
    */
   public alert(alert: AndroidAutoAlertConfig) {
-    this.alertCallbacks = {};
     const { actions, ...config } = alert;
 
     let duration = alert.duration;
@@ -465,7 +473,7 @@ export class CarPlayInterface {
     const updatedActions = actions?.map(action => {
       const id = getCallbackActionId();
       const { onPress, ...rest } = action;
-      this.alertCallbacks[id] = onPress;
+      this.alertCallbacks[id] = { alertId: alert.id, callback: onPress };
       return { ...rest, id };
     });
 
@@ -474,11 +482,10 @@ export class CarPlayInterface {
 
   /**
    * dismisses ongoing alert, no-op in case the alert is not shown anymore
-   * clears all alert action callbacks
    * @namespace Android
    */
   public dismissAlert(id: number) {
-    this.alertCallbacks = {};
+    this.cleanAlertCallbacks(id);
     CarPlay.bridge.dismissAlert(id);
   }
 
@@ -492,6 +499,18 @@ export class CarPlayInterface {
    */
   public getPlayServicesAvailable(): Promise<boolean> {
     return CarPlay.bridge.getPlayServicesAvailable();
+  }
+
+  private cleanAlertCallbacks(alertId: number) {
+    this.alertCallbacks = Object.entries(this.alertCallbacks).reduce(
+      (acc, [alertCallbackId, alert]) => {
+        if (alert.alertId !== alertId) {
+          acc[alertCallbackId] = alert;
+        }
+        return acc;
+      },
+      {} as typeof this.alertCallbacks,
+    );
   }
 }
 
