@@ -452,7 +452,7 @@ export class CarPlayInterface {
    * @namespace Android
    */
   public alert(alert: AndroidAutoAlertConfig) {
-    this.alertCallbacks = {};
+    this.alertCallbacks = { id: () => null };
     const { actions, ...config } = alert;
 
     let duration = alert.duration;
@@ -462,11 +462,12 @@ export class CarPlayInterface {
       duration = 500;
     }
 
-    const updatedActions = actions?.map(action => {
-      const id = getCallbackActionId();
+    const updatedActions = actions?.map((action, idx) => {
+      const actionId = `${alert.id}_${idx}`
+
       const { onPress, ...rest } = action;
-      this.alertCallbacks[id] = onPress;
-      return { ...rest, id };
+      this.alertCallbacks[actionId] = onPress;
+      return { ...rest, id: actionId };
     });
 
     CarPlay.bridge.alert({ ...config, actions: updatedActions, duration });
@@ -478,8 +479,10 @@ export class CarPlayInterface {
    * @namespace Android
    */
   public dismissAlert(id: number) {
-    this.alertCallbacks = {};
-    CarPlay.bridge.dismissAlert(id);
+    if (this.alertCallbacks?.[id]) {
+      this.alertCallbacks = {};
+      CarPlay.bridge.dismissAlert(id); 
+    }
   }
 
   public notify(title: string, text: string, largeIcon?: ImageSourcePropType) {
