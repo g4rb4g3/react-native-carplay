@@ -3,10 +3,11 @@
 #import <React/RCTRootView.h>
 #import "react_native_carplay/react_native_carplay-Swift.h"
 
+static NSMutableDictionary<NSNumber *, CPNavigationAlert *> *navigationAlertWrappers;
+
 @implementation RNCarPlay
 {
     bool hasListeners;
-    NSMutableDictionary<NSNumber *, CPNavigationAlert *> *navigationAlertWrappers;
     NSDate *lastShowTripsTime;
     NSString *currentSearchText;
 }
@@ -15,12 +16,10 @@
 @synthesize selectedResultBlock;
 @synthesize isNowPlayingActive;
 
-- (instancetype)init {
-    self = [super init];
-    if (self) {
-        navigationAlertWrappers = [[NSMutableDictionary alloc] init];
++ (void)initialize {
+    if (self == [RNCarPlay class]) {
+        navigationAlertWrappers = [NSMutableDictionary new];
     }
-    return self;
 }
 
 - (void)startObserving {
@@ -66,6 +65,7 @@
 + (void) disconnect {
     RNCPStore *store = [RNCPStore sharedManager];
     RNCarPlayApp* app = store.app;
+    [navigationAlertWrappers removeAllObjects];
     [app disconnect];
 }
 
