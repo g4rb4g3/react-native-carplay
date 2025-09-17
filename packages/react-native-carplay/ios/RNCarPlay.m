@@ -1088,20 +1088,26 @@ RCT_EXPORT_METHOD(updateMapTemplateMapButtons:(NSString*) templateId mapButtons:
     }
 }
 
-RCT_EXPORT_METHOD(getTopTemplate: (RCTResponseSenderBlock)callback) {
+RCT_EXPORT_METHOD(getTopTemplate: (RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
     RNCPStore *store = [RNCPStore sharedManager];
     RNCarPlayApp* app = store.app;
     CPTemplate *topTemplate = app.interfaceController.topTemplate;
     if (topTemplate == nil || topTemplate.userInfo == nil || topTemplate.userInfo[@"templateId"] == nil) {
-        callback(@[]);
+        resolve([NSNull null]);
     } else {
-        callback(@[topTemplate.userInfo[@"templateId"]]);
+        resolve(topTemplate.userInfo[@"templateId"]);
     }
 }
 
-RCT_EXPORT_METHOD(getRootTemplate: (RCTResponseSenderBlock)callback) {
+RCT_EXPORT_METHOD(getRootTemplate: (RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
     RNCPStore *store = [RNCPStore sharedManager];
-    callback(@[store.rootTemplateId]);
+    if (!store.rootTemplateId) {
+        resolve([NSNull null]);
+        return;
+    }
+    resolve(store.rootTemplateId);
 }
 
 # pragma parsers

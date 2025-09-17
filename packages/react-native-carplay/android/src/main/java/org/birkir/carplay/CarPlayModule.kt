@@ -436,6 +436,20 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
     promise.resolve(PlayService.isPlayServiceAvailable(carContext))
   }
 
+  @ReactMethod
+  fun getTopTemplate(promise: Promise) {
+    handler.post {
+      promise.resolve(screenManager?.top?.marker)
+    }
+  }
+
+  @ReactMethod
+  fun getRootTemplate(promise: Promise) {
+    handler.post {
+      promise.resolve(screenManager?.screenStack?.first()?.marker)
+    }
+  }
+
   private fun createCarScreenContext(screen: CarScreen, emitter: EventEmitter): CarScreenContext {
     val templateId = screen.marker!!
     return CarScreenContext(templateId, emitter, carScreens)

@@ -64,8 +64,8 @@ export interface InternalCarPlay extends NativeModule {
   reactToUpdatedSearchText(id: string, items: unknown): void;
   updateTabBarTemplates(id: string, config: unknown): void;
   activateVoiceControlState(id: string, identifier: string): void;
-  getRootTemplate(callback: (templateId: string) => void): void;
-  getTopTemplate(callback: (templateId: string) => void): void;
+  getRootTemplate(): Promise<string>;
+  getTopTemplate(): Promise<string>;
   createDashboard(id: string, config: unknown): void;
   checkForDashboardConnection(): void;
   updateDashboardShortcutButtons(config: unknown): void;
