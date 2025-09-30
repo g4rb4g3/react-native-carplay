@@ -429,14 +429,14 @@ export class CarPlayInterface {
   /**
    * The current root template in the template navigation hierarchy.
    */
-  public getRootTemplate(): Promise<string> {
+  public getRootTemplate(): Promise<string | null> {
     return this.bridge.getRootTemplate();
   }
 
   /**
    * The top-most template in the navigation hierarchy stack.
    */
-  public getTopTemplate(): Promise<string> {
+  public getTopTemplate(): Promise<string | null> {
     return this.bridge.getTopTemplate();
   }
 
