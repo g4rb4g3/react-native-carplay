@@ -89,21 +89,21 @@ class VirtualRenderer(
       }
 
       override fun onClick(x: Float, y: Float) {
-        emitter.didPress(x = x / BuildConfig.CARPLAY_SCALE_FACTOR, y = y / BuildConfig.CARPLAY_SCALE_FACTOR)
+        emitter.didPress(x = x / scale, y = y / scale)
       }
 
       override fun onScale(focusX: Float, focusY: Float, scaleFactor: Float) {
         emitter.didUpdatePinchGesture(
-          focusX = focusX / BuildConfig.CARPLAY_SCALE_FACTOR,
-          focusY = focusY / BuildConfig.CARPLAY_SCALE_FACTOR,
+          focusX = focusX / scale,
+          focusY = focusY / scale,
           scaleFactor = scaleFactor
         )
       }
 
       override fun onScroll(distanceX: Float, distanceY: Float) {
         emitter.didUpdatePanGestureWithTranslation(
-          distanceX = -distanceX / BuildConfig.CARPLAY_SCALE_FACTOR,
-          distanceY = -distanceY / BuildConfig.CARPLAY_SCALE_FACTOR
+          distanceX = -distanceX / scale,
+          distanceY = -distanceY / scale
         )
       }
 
