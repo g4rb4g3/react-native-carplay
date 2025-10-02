@@ -439,14 +439,14 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
   @ReactMethod
   fun getTopTemplate(promise: Promise) {
     handler.post {
-      promise.resolve(screenManager?.screenStack?.first()?.marker)
+      promise.resolve(screenManager?.screenStack?.firstOrNull()?.marker)
     }
   }
 
   @ReactMethod
   fun getRootTemplate(promise: Promise) {
     handler.post {
-      promise.resolve(screenManager?.screenStack?.last()?.marker)
+      promise.resolve(screenManager?.screenStack?.lastOrNull()?.marker)
     }
   }
 
