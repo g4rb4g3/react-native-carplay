@@ -36,6 +36,7 @@ import org.birkir.carplay.screens.CarScreenContext
 import org.birkir.carplay.utils.EventEmitter
 import java.util.TimeZone
 import kotlin.math.max
+import androidx.core.graphics.toColorInt
 
 class Parser(
   context: CarContext, carScreenContext: CarScreenContext
@@ -66,7 +67,18 @@ class Parser(
 
     fun parseCarIcon(map: ReadableMap, context: CarContext): CarIcon {
       val bitmap = parseBitmap(map, context)
-      return CarIcon.Builder(IconCompat.createWithBitmap(bitmap)).build()
+      val iconCompat = IconCompat.createWithBitmap(bitmap)
+
+      if (map.hasKey("tintColor") && !map.isNull("tintColor")) {
+        val colorStr = map.getString("tintColor")
+        try {
+          val color = colorStr!!.toColorInt()
+          iconCompat.setTint(color)
+        } catch (e: IllegalArgumentException) {
+        }
+      }
+
+      return CarIcon.Builder(iconCompat).build()
     }
 
     fun parseTravelEstimate(map: ReadableMap): TravelEstimate {

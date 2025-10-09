@@ -181,9 +181,13 @@ export class Template<P> {
         if (obj[key] != null && typeof obj[key] === 'object') {
           traverse(obj[key]);
         }
-        if (key === 'image') {
+        if (key === 'image' || key === "tabImage") {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-          obj[key] = Image.resolveAssetSource(obj[key]);
+          const resolved = Image.resolveAssetSource(obj[key]);
+          obj[key] = {
+            ...resolved,
+            ...(obj["tintColor"] && obj["tintColor"] != null ? {tintColor: obj["tintColor"]} : {}),
+          };
         }
       }
     }

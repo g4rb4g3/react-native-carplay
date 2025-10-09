@@ -6,7 +6,12 @@ import android.util.Log
 import androidx.car.app.CarContext
 import androidx.car.app.HostException
 import androidx.car.app.constraints.ConstraintManager
+import androidx.car.app.model.Action
+import androidx.car.app.model.Action.FLAG_IS_PERSISTENT
+import androidx.car.app.model.Action.FLAG_PRIMARY
 import androidx.car.app.model.ActionStrip
+import androidx.car.app.model.CarColor
+import androidx.car.app.model.CarIcon
 import androidx.car.app.model.CarLocation
 import androidx.car.app.model.DistanceSpan
 import androidx.car.app.model.DurationSpan
@@ -24,8 +29,15 @@ import androidx.car.app.navigation.model.MessageInfo
 import androidx.car.app.navigation.model.NavigationTemplate
 import androidx.car.app.navigation.model.RoutingInfo
 import androidx.car.app.versioning.CarAppApiLevels
+import androidx.core.graphics.drawable.IconCompat
+import com.facebook.common.references.CloseableReference
+import com.facebook.datasource.DataSources
+import com.facebook.drawee.backends.pipeline.Fresco
+import com.facebook.imagepipeline.image.CloseableBitmap
+import com.facebook.imagepipeline.request.ImageRequestBuilder
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
+import com.facebook.react.views.imagehelper.ImageSource
 import org.birkir.carplay.BuildConfig
 import org.birkir.carplay.screens.CarScreenContext
 import org.birkir.carplay.utils.EventEmitter
@@ -47,6 +59,76 @@ abstract class RCTTemplate(
 
   protected val eventEmitter: EventEmitter
     get() = carScreenContext.eventEmitter
+
+  fun parseCarIcon(map: ReadableMap): CarIcon {
+    val source = ImageSource(context, map.getString("uri"))
+    val imageRequest = ImageRequestBuilder.newBuilderWithSource(source.uri).build()
+    val dataSource = Fresco.getImagePipeline().fetchDecodedImage(imageRequest, context)
+    val result = DataSources.waitForFinalResult(dataSource) as CloseableReference<CloseableBitmap>
+    val bitmap = result.get().underlyingBitmap
+
+    CloseableReference.closeSafely(result)
+    dataSource.close()
+
+    return CarIcon.Builder(IconCompat.createWithBitmap(bitmap)).build()
+  }
+
+  fun parseColor(colorName: String?): CarColor {
+    // @todo implement CarColor.createCustom(light: 0x00, dark: 0x00)
+    // maybe use react native tooling for this
+
+    return when (colorName) {
+      "blue" -> CarColor.BLUE
+      "green" -> CarColor.GREEN
+      "primary" -> CarColor.PRIMARY
+      "red" -> CarColor.RED
+      "secondary" -> CarColor.SECONDARY
+      "yellow" -> CarColor.YELLOW
+      "default" -> CarColor.DEFAULT
+      else -> CarColor.DEFAULT
+    }
+  }
+
+
+  fun parseAction(map: ReadableMap?): Action {
+    val type = map?.getString("type")
+    if (type == "appIcon") {
+      return Action.APP_ICON
+    } else if (type == "back") {
+      return Action.BACK
+    } else if (type == "pan") {
+      return Action.PAN
+    }
+    val id = map?.getString("id")
+    val builder = Action.Builder()
+    if (map != null) {
+      map.getString("title")?.let {
+        builder.setTitle(it)
+      }
+      map.getMap("icon")?.let {
+        builder.setIcon(parseCarIcon(it))
+      }
+      map.getString("visibility")?.let {
+        if (it == "primary") {
+          builder.setFlags(FLAG_PRIMARY)
+        }
+        if (it == "persistent") {
+          builder.setFlags(FLAG_IS_PERSISTENT)
+        }
+      }
+      try {
+        builder.setBackgroundColor(parseColor(map.getString("backgroundColor")))
+      } catch (e: Exception) {
+        e.printStackTrace()
+      }
+      builder.setOnClickListener {
+        if (id != null) {
+          eventEmitter.buttonPressed(id)
+        }
+      }
+    }
+    return builder.build()
+  }
 
   protected fun parseActionStrip(actions: ReadableArray): ActionStrip {
     val builder = ActionStrip.Builder()
