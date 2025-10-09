@@ -11,6 +11,7 @@ import androidx.car.app.CarToast
 import androidx.car.app.ScreenManager
 import androidx.car.app.model.Alert
 import androidx.car.app.model.AlertCallback
+import androidx.car.app.model.TabTemplate
 import androidx.car.app.model.Template
 import androidx.car.app.navigation.model.NavigationTemplate
 import androidx.lifecycle.DefaultLifecycleObserver
@@ -145,6 +146,10 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
               // cluster can hold NavigationTemplate only and always has a surface to render to
               it.key.setTemplate(template = clusterTemplate, invalidate = true, isSurfaceTemplate = true, sessionLifecycle = sessionLifecycle)
             }
+          }
+          if (template is TabTemplate) {
+            carScreens[carScreenContext.screenMarker]?.setTemplate(template, invalidate = true, isSurfaceTemplate = true, sessionLifecycle = sessionLifecycle)
+            carScreens[carScreenContext.screenMarker]?.invalidate()
           }
         }
       }
