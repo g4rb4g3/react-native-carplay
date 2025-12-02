@@ -135,6 +135,8 @@ abstract class RCTTemplate(
           text.setSpan(durationSpan, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
         setTitle(text)
+      } ?: {
+          setTitle("missing title")
       }
       item.getString("detailText")?.let { addText(it) }
       item.getMap("image")?.let { setImage(Parser.parseCarIcon(it, context)) }
@@ -228,7 +230,7 @@ abstract class RCTTemplate(
     val builder = Row.Builder()
     builder.setTitle(
       Parser.parseCarText(
-        props.getString("title")!!,
+        props.getString("title") ?: "missing title",
         props.getMap("metadata")
       )
     )

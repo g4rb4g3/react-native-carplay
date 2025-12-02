@@ -212,8 +212,7 @@ export class CarPlayInterface {
           // we listen to alert actions only in here, these do not have a templateId
           return;
         }
-        const { callback } = this.alertCallbacks[buttonId];
-        callback?.();
+        this.alertCallbacks[buttonId]?.callback?.();
       },
     );
 
