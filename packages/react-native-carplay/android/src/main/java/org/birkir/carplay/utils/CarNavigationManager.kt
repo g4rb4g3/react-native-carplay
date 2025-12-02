@@ -10,9 +10,9 @@ import com.facebook.react.bridge.ReadableMap
 import org.birkir.carplay.parser.Parser
 
 object CarNavigationManager {
-    private lateinit var navigationManager: NavigationManager
-    private lateinit var eventEmitter: EventEmitter
-    private lateinit var carContext: CarContext
+    private var navigationManager: NavigationManager? = null
+    private var eventEmitter: EventEmitter? = null
+    private var carContext: CarContext? = null
 
     private var isNavigating = MutableLiveData(false)
     val isNavigatingLiveData: LiveData<Boolean> get() = isNavigating
@@ -21,13 +21,8 @@ object CarNavigationManager {
         this.eventEmitter = eventEmitter
         this.carContext = carContext
 
-        if (this::navigationManager.isInitialized) {
-            return
-        }
-
-        navigationManager = carContext.getCarService(NavigationManager::class.java)
-
-        navigationManager.setNavigationManagerCallback(object : NavigationManagerCallback {
+        this.navigationManager = carContext.getCarService(NavigationManager::class.java)
+        this.navigationManager?.setNavigationManagerCallback(object : NavigationManagerCallback {
             override fun onAutoDriveEnabled() {
                 eventEmitter.didEnableAutoDrive()
             }
@@ -39,17 +34,28 @@ object CarNavigationManager {
         })
     }
 
+    fun destroy() {
+        this.carContext = null
+        this.navigationManager = null
+        this.eventEmitter = null
+        isNavigating.value = false
+    }
+
     fun isInitialized(): Boolean =
-        this::navigationManager.isInitialized && this::eventEmitter.isInitialized
+        this.navigationManager != null && this.eventEmitter != null
 
     fun navigationStarted() {
-        navigationManager.navigationStarted()
-        isNavigating.value = true
+        navigationManager?.let {
+            it.navigationStarted()
+            isNavigating.value = true
+        }
     }
 
     fun navigationEnded() {
-        navigationManager.navigationEnded()
-        isNavigating.value = false
+        navigationManager?.let {
+            it.navigationEnded()
+            isNavigating.value = false
+        }
     }
 
     fun updateTrip(tripConfig: ReadableMap) {
@@ -57,33 +63,36 @@ object CarNavigationManager {
             return
         }
 
-        val trip = Trip.Builder().apply {
-            tripConfig.getArray("steps")?.let { steps ->
-                for (i in 0 until(steps.size())) {
-                    val stepConfig = steps.getMap(i)
-                    stepConfig?.let { stepMap ->
-                        val step = Parser.parseStep(stepMap, carContext)
-                        stepMap.getMap("stepTravelEstimate")?.let { travelEstimate ->
-                            val stepTravelEstimate = Parser.parseTravelEstimate(travelEstimate)
-                            addStep(step, stepTravelEstimate)
+        carContext?.let {
+            val trip = Trip.Builder().apply {
+                tripConfig.getArray("steps")?.let { steps ->
+                    for (i in 0 until (steps.size())) {
+                        val stepConfig = steps.getMap(i)
+                        stepConfig?.let { stepMap ->
+                            val step = Parser.parseStep(stepMap, it)
+                            stepMap.getMap("stepTravelEstimate")?.let { travelEstimate ->
+                                val stepTravelEstimate = Parser.parseTravelEstimate(travelEstimate)
+                                addStep(step, stepTravelEstimate)
+                            }
                         }
                     }
                 }
-            }
-            tripConfig.getArray("destinations")?.let { destinations ->
-                for (i in 0 until(destinations.size())) {
-                    val destinationConfig = destinations.getMap(i)
-                    destinationConfig?.let { destMap ->
-                        val destination = Parser.parseDestination(destMap, carContext)
-                        destMap.getMap("destinationTravelEstimate")?.let { travelEstimate ->
-                            val destinationTravelEstimate = Parser.parseTravelEstimate(travelEstimate)
-                            addDestination(destination, destinationTravelEstimate)
+                tripConfig.getArray("destinations")?.let { destinations ->
+                    for (i in 0 until (destinations.size())) {
+                        val destinationConfig = destinations.getMap(i)
+                        destinationConfig?.let { destMap ->
+                            val destination = Parser.parseDestination(destMap, it)
+                            destMap.getMap("destinationTravelEstimate")?.let { travelEstimate ->
+                                val destinationTravelEstimate =
+                                    Parser.parseTravelEstimate(travelEstimate)
+                                addDestination(destination, destinationTravelEstimate)
+                            }
                         }
                     }
                 }
-            }
-        }.build()
+            }.build()
 
-        navigationManager.updateTrip(trip)
+            navigationManager?.updateTrip(trip)
+        }
     }
 }

@@ -95,6 +95,14 @@ class CarPlayModule internal constructor(private val reactContext: ReactApplicat
 
       }
     })
+
+    sessionLifecycle.addObserver(object: DefaultLifecycleObserver {
+      override fun onDestroy(owner: LifecycleOwner) {
+        CarNavigationManager.destroy()
+        sessionLifecycle.removeObserver(this)
+      }
+    })
+
     eventEmitter.didConnect()
   }
 
