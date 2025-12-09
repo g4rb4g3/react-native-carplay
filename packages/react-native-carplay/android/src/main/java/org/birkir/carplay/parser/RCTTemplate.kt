@@ -135,7 +135,7 @@ abstract class RCTTemplate(
           text.setSpan(durationSpan, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
         setTitle(text)
-      } ?: {
+      } ?: run {
           setTitle("missing title")
       }
       item.getString("detailText")?.let { addText(it) }
