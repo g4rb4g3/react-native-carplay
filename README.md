@@ -1,3 +1,6 @@
+# New and improved version available here:
+https://github.com/Iternio-Planning-AB/react-native-auto-play
+
 # React Native CarPlay and Android Auto
 
 Extend your React Native applications to car infotainment systems with `react-native-carplay`. Now supporting both Apple CarPlay and Android Auto.
